@@ -19,7 +19,7 @@ Every release must retain these capabilities unless an explicit migration docume
 
 ## Change policy
 
-- Replace complete files; do not submit partial patch hunks as the delivered implementation.
+- Full-file replacements only; do not submit partial patch hunks as the delivered implementation.
 - Never remove a registered capability to make a build pass.
 - Repair the implementation or its environment and rerun all gates.
-- Do not publish an APK unless lint, unit tests, debug build, release build, artifact verification, and checksum generation all succeed.
+- Do not publish an APK unless lint, unit tests, debug build, release build, artifact verification, signature verification, and checksum generation all succeed.
