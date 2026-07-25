@@ -48,8 +48,8 @@ require_all(
     "app/src/main/res/values/themes.xml",
     [
         "android:windowBackground",
-        "android:windowLightStatusBar">false" if False else "android:windowLightStatusBar",
-        "android:windowLightNavigationBar",
+        '<item name="android:windowLightStatusBar">false</item>',
+        '<item name="android:windowLightNavigationBar">false</item>',
     ],
 )
 require_all(
