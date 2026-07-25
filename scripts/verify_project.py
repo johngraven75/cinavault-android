@@ -24,7 +24,7 @@ REQUIRED = {
         '"/api/library"',
         '"/api/auth/password"',
         '"/api/auth/access-key"',
-        '"Authorization" to "Bearer',
+        'setRequestProperty("Authorization", "Bearer $value")',
     ],
     "app/src/main/java/com/cinavault/android/data/Models.kt": [
         "mediaKey",
