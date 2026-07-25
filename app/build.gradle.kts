@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace = "com.cinavault.android"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.cinavault.android"
         minSdk = 24
-        targetSdk = 37
+        targetSdk = 36
         versionCode = 2
         versionName = "2.0.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
