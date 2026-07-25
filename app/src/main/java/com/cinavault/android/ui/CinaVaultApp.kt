@@ -1,21 +1,20 @@
 package com.cinavault.android.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -25,39 +24,58 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Cast
 import androidx.compose.material.icons.rounded.Cloud
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Extension
+import androidx.compose.material.icons.rounded.Folder
 import androidx.compose.material.icons.rounded.GridView
 import androidx.compose.material.icons.rounded.LiveTv
 import androidx.compose.material.icons.rounded.Logout
+import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Movie
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Storage
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -76,11 +94,25 @@ import com.cinavault.android.ui.theme.CinaVaultPanel
 import com.cinavault.android.ui.theme.CinaVaultText
 import com.google.android.gms.cast.framework.CastButtonFactory
 
-private val destinations = listOf(
+private val primaryDestinations = listOf(
     AppDestination.Library,
-    AppDestination.Player,
+    AppDestination.Sources,
+    AppDestination.Downloads,
+    AppDestination.LiveTv,
+    AppDestination.Server,
+    AppDestination.Security,
     AppDestination.Remote,
-    AppDestination.Casting,
+    AppDestination.Advanced,
+    AppDestination.CloudNas,
+    AppDestination.Extensions,
+    AppDestination.Intelligence,
+    AppDestination.Settings,
+)
+
+private val compactDestinations = listOf(
+    AppDestination.Library,
+    AppDestination.Sources,
+    AppDestination.Remote,
     AppDestination.Intelligence,
     AppDestination.Settings,
 )
@@ -95,6 +127,7 @@ fun CinaVaultApp(
     onSearch: (String) -> Unit,
     onOpenMedia: (MediaItem) -> Unit,
     onRefresh: () -> Unit,
+    onControlAction: (String) -> Unit,
     onToggleAutopilot: (Boolean) -> Unit,
     onRunAutopilot: () -> Unit,
     onDismissError: () -> Unit,
@@ -109,15 +142,29 @@ fun CinaVaultApp(
             onPasswordLogin = onPasswordLogin,
             onAccessKeyLogin = onAccessKeyLogin,
         )
-        state.errorMessage?.let { message ->
-            ErrorDialog(message, onDismissError)
-        }
+        state.errorMessage?.let { message -> ErrorDialog(message, onDismissError) }
         return
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize()) {
+    var commandPaletteOpen by rememberSaveable { mutableStateOf(false) }
+    BackHandler(enabled = commandPaletteOpen) { commandPaletteOpen = false }
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF02040A))
+            .onPreviewKeyEvent { event ->
+                val commandPressed = event.isCtrlPressed || event.isMetaPressed
+                if (event.type == KeyEventType.KeyDown && commandPressed && event.key == Key.K) {
+                    commandPaletteOpen = !commandPaletteOpen
+                    true
+                } else {
+                    false
+                }
+            },
+    ) {
         val wide = maxWidth >= 820.dp
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().background(Color(0xFF02040A))) {
             ExperienceBackdrop()
             Row(
                 modifier = Modifier
@@ -148,18 +195,19 @@ fun CinaVaultApp(
                                 Modifier
                             },
                         ),
-                    color = CinaVaultPanel.copy(alpha = 0.76f),
+                    color = CinaVaultPanel.copy(alpha = 0.94f),
                     shape = if (wide) RoundedCornerShape(28.dp) else RoundedCornerShape(0.dp),
                     tonalElevation = 0.dp,
                 ) {
                     Scaffold(
-                        containerColor = Color.Transparent,
+                        containerColor = Color(0xFF050918),
                         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
                         topBar = {
                             SpatialCommandBar(
                                 state = state,
                                 onSearch = onSearch,
                                 onRefresh = onRefresh,
+                                onOpenCommands = { commandPaletteOpen = true },
                             )
                         },
                         bottomBar = {
@@ -167,6 +215,7 @@ fun CinaVaultApp(
                                 SpatialBottomNavigation(
                                     selected = state.destination,
                                     onNavigate = onNavigate,
+                                    onOpenCommands = { commandPaletteOpen = true },
                                 )
                             }
                         },
@@ -182,49 +231,24 @@ fun CinaVaultApp(
                             AnimatedContent(
                                 targetState = state.destination,
                                 transitionSpec = {
-                                    (slideInHorizontally { it / 8 } + fadeIn() + scaleIn(initialScale = 0.985f))
-                                        .togetherWith(
-                                            slideOutHorizontally { -it / 10 } + fadeOut() + scaleOut(targetScale = 0.99f),
-                                        )
+                                    (slideInHorizontally { it / 10 } + fadeIn())
+                                        .togetherWith(slideOutHorizontally { -it / 12 } + fadeOut())
                                 },
-                                label = "destination-transition",
+                                label = "destination-transition-safe",
                                 modifier = Modifier.weight(1f),
                             ) { destination ->
-                                when (destination) {
-                                    AppDestination.Library -> LibraryScreen(
-                                        items = state.filteredLibrary,
-                                        refreshing = state.refreshing,
-                                        absoluteMediaUrl = absoluteMediaUrl,
-                                        sessionToken = sessionToken(),
-                                        onRefresh = onRefresh,
-                                        onOpenMedia = onOpenMedia,
-                                    )
-                                    AppDestination.Player -> PlayerScreen(
-                                        media = state.selectedMedia,
-                                        streamUrl = state.selectedMedia?.streamUrl?.let(absoluteMediaUrl),
-                                        artworkUrl = state.selectedMedia?.artworkUrl?.let(absoluteMediaUrl),
-                                        token = sessionToken(),
-                                    )
-                                    AppDestination.Remote -> RemoteScreen(
-                                        session = session,
-                                        serverInfo = state.serverInfo,
-                                        statusMessage = state.statusMessage,
-                                        onRefresh = onRefresh,
-                                    )
-                                    AppDestination.Casting -> CastingScreen(state.selectedMedia)
-                                    AppDestination.Intelligence -> IntelligenceScreen(
-                                        library = state.library,
-                                        enabled = state.autopilotEnabled,
-                                        lastRefreshEpochMillis = state.lastRefreshEpochMillis,
-                                        onToggle = onToggleAutopilot,
-                                        onRunNow = onRunAutopilot,
-                                    )
-                                    AppDestination.Settings -> SettingsScreen(
-                                        session = session,
-                                        serverInfo = state.serverInfo,
-                                        onLogout = onLogout,
-                                    )
-                                }
+                                DestinationContent(
+                                    destination = destination,
+                                    state = state,
+                                    onRefresh = onRefresh,
+                                    onOpenMedia = onOpenMedia,
+                                    onControlAction = onControlAction,
+                                    onToggleAutopilot = onToggleAutopilot,
+                                    onRunAutopilot = onRunAutopilot,
+                                    onLogout = onLogout,
+                                    absoluteMediaUrl = absoluteMediaUrl,
+                                    sessionToken = sessionToken,
+                                )
                             }
                         }
                     }
@@ -239,13 +263,24 @@ fun CinaVaultApp(
             ) {
                 Box(
                     modifier = Modifier
-                        .background(Color.Black.copy(alpha = 0.72f), RoundedCornerShape(20.dp))
+                        .background(Color(0xFF050918), RoundedCornerShape(20.dp))
                         .border(1.dp, CinaVaultCyan.copy(alpha = 0.24f), RoundedCornerShape(20.dp))
                         .padding(20.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator(color = CinaVaultCyan)
                 }
+            }
+
+            if (commandPaletteOpen) {
+                CommandPaletteOverlay(
+                    selected = state.destination,
+                    onNavigate = { destination ->
+                        commandPaletteOpen = false
+                        onNavigate(destination)
+                    },
+                    onDismiss = { commandPaletteOpen = false },
+                )
             }
         }
     }
@@ -254,16 +289,82 @@ fun CinaVaultApp(
 }
 
 @Composable
+private fun DestinationContent(
+    destination: AppDestination,
+    state: CinaVaultUiState,
+    onRefresh: () -> Unit,
+    onOpenMedia: (MediaItem) -> Unit,
+    onControlAction: (String) -> Unit,
+    onToggleAutopilot: (Boolean) -> Unit,
+    onRunAutopilot: () -> Unit,
+    onLogout: () -> Unit,
+    absoluteMediaUrl: (String) -> String?,
+    sessionToken: () -> String?,
+) {
+    val session = state.session ?: return
+    when (destination) {
+        AppDestination.Library -> LibraryScreen(
+            items = state.filteredLibrary,
+            refreshing = state.refreshing,
+            absoluteMediaUrl = absoluteMediaUrl,
+            sessionToken = sessionToken(),
+            onRefresh = onRefresh,
+            onOpenMedia = onOpenMedia,
+        )
+        AppDestination.Player -> PlayerScreen(
+            media = state.selectedMedia,
+            streamUrl = state.selectedMedia?.streamUrl?.let(absoluteMediaUrl),
+            artworkUrl = state.selectedMedia?.artworkUrl?.let(absoluteMediaUrl),
+            token = sessionToken(),
+        )
+        AppDestination.Remote -> RemoteScreen(
+            session = session,
+            serverInfo = state.serverInfo,
+            statusMessage = state.statusMessage,
+            onRefresh = onRefresh,
+        )
+        AppDestination.Casting -> CastingScreen(state.selectedMedia)
+        AppDestination.Intelligence -> IntelligenceScreen(
+            library = state.library,
+            enabled = state.autopilotEnabled,
+            lastRefreshEpochMillis = state.lastRefreshEpochMillis,
+            onToggle = onToggleAutopilot,
+            onRunNow = onRunAutopilot,
+        )
+        AppDestination.Settings -> SettingsScreen(
+            session = session,
+            serverInfo = state.serverInfo,
+            onLogout = onLogout,
+        )
+        AppDestination.Sources,
+        AppDestination.Downloads,
+        AppDestination.LiveTv,
+        AppDestination.Server,
+        AppDestination.Security,
+        AppDestination.Advanced,
+        AppDestination.CloudNas,
+        AppDestination.Extensions,
+        -> PlatformControlScreen(
+            destination = destination,
+            snapshot = state.controlSnapshot,
+            runningAction = state.runningControlAction,
+            onAction = onControlAction,
+        )
+    }
+}
+
+@Composable
 private fun SpatialCommandBar(
     state: CinaVaultUiState,
     onSearch: (String) -> Unit,
     onRefresh: () -> Unit,
+    onOpenCommands: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .background(Color(0xFF050918))
             .padding(horizontal = 10.dp, vertical = 8.dp)
-            .background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(20.dp))
             .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -280,7 +381,7 @@ private fun SpatialCommandBar(
         ) {
             Icon(Icons.Rounded.Movie, null, tint = Color(0xFF02040A))
         }
-        Column(Modifier.weight(0.35f)) {
+        Column(Modifier.weight(0.34f)) {
             Text(
                 text = "CINAVAULT",
                 color = CinaVaultCyan,
@@ -291,7 +392,7 @@ private fun SpatialCommandBar(
             Text(
                 text = state.destination.label,
                 color = CinaVaultText,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -300,12 +401,15 @@ private fun SpatialCommandBar(
         OutlinedTextField(
             value = state.searchQuery,
             onValueChange = onSearch,
-            modifier = Modifier.weight(0.65f),
+            modifier = Modifier.weight(0.66f),
             singleLine = true,
             leadingIcon = { Icon(Icons.Rounded.Search, null) },
             placeholder = { Text("Search the vault") },
             shape = RoundedCornerShape(15.dp),
         )
+        IconButton(onClick = onOpenCommands) {
+            Icon(Icons.Rounded.Apps, contentDescription = "Open command palette")
+        }
         AndroidView(
             factory = { context ->
                 MediaRouteButton(context).also { button ->
@@ -345,30 +449,16 @@ private fun SpatialContextStage(state: CinaVaultUiState) {
     ) {
         Column(Modifier.weight(1f)) {
             Text(
-                text = when (state.destination) {
-                    AppDestination.Library -> "CINEMATIC LIBRARY"
-                    AppDestination.Player -> "SECURE PLAYBACK"
-                    AppDestination.Remote -> "ANYWHERE ACCESS"
-                    AppDestination.Casting -> "DEVICE ORBIT"
-                    AppDestination.Intelligence -> "AUTONOMOUS INTELLIGENCE"
-                    AppDestination.Settings -> "EXPERIENCE CONTROL"
-                },
+                text = state.destination.eyebrow(),
                 color = CinaVaultCyan,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 1.8.sp,
             )
             Text(
-                text = when (state.destination) {
-                    AppDestination.Library -> "The Vault"
-                    AppDestination.Player -> state.selectedMedia?.title ?: "Now Playing"
-                    AppDestination.Remote -> "Remote Orbit"
-                    AppDestination.Casting -> "Casting Center"
-                    AppDestination.Intelligence -> "AI Autopilot"
-                    AppDestination.Settings -> "Personalize CinaVault"
-                },
+                text = state.destination.stageTitle(state.selectedMedia?.title),
                 color = CinaVaultText,
-                fontSize = 24.sp,
+                fontSize = 23.sp,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -384,7 +474,7 @@ private fun SpatialContextStage(state: CinaVaultUiState) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             MiniTelemetry(Icons.Rounded.GridView, state.library.size.toString(), "Items", CinaVaultCyan)
             MiniTelemetry(
-                Icons.Rounded.Shield,
+                Icons.Rounded.Security,
                 if (state.serverInfo?.localPathsExposed == true) "Check" else "Safe",
                 "Privacy",
                 CinaVaultEmerald,
@@ -403,7 +493,7 @@ private fun SpatialContextStage(state: CinaVaultUiState) {
 private fun MiniTelemetry(icon: ImageVector, value: String, label: String, accent: Color) {
     Column(
         modifier = Modifier
-            .background(Color.Black.copy(alpha = 0.22f), RoundedCornerShape(14.dp))
+            .background(Color(0xFF080D1C), RoundedCornerShape(14.dp))
             .padding(horizontal = 10.dp, vertical = 7.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -419,44 +509,62 @@ private fun SpatialNavigationRail(
     onNavigate: (AppDestination) -> Unit,
     onLogout: () -> Unit,
 ) {
-    NavigationRail(
+    Column(
         modifier = Modifier
-            .width(86.dp)
+            .width(96.dp)
             .fillMaxHeight()
-            .background(CinaVaultPanel.copy(alpha = 0.88f), RoundedCornerShape(28.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(28.dp)),
-        containerColor = Color.Transparent,
-        header = {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 14.dp)
-                    .size(50.dp)
-                    .background(
-                        Brush.linearGradient(listOf(CinaVaultCyan, CinaVaultMagenta)),
-                        RoundedCornerShape(18.dp),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.Movie, null, tint = Color(0xFF02040A))
-            }
-        },
+            .background(CinaVaultPanel, RoundedCornerShape(28.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.09f), RoundedCornerShape(28.dp))
+            .padding(horizontal = 7.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        destinations.forEach { destination ->
-            NavigationRailItem(
-                selected = selected == destination,
-                onClick = { onNavigate(destination) },
-                icon = { Icon(destination.icon(), destination.label) },
-                label = { Text(destination.shortLabel(), fontSize = 8.sp) },
-                alwaysShowLabel = false,
-            )
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .background(
+                    Brush.linearGradient(listOf(CinaVaultCyan, CinaVaultMagenta)),
+                    RoundedCornerShape(18.dp),
+                ),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(Icons.Rounded.Movie, null, tint = Color(0xFF02040A))
         }
-        Spacer(Modifier.weight(1f))
-        NavigationRailItem(
-            selected = false,
-            onClick = onLogout,
-            icon = { Icon(Icons.Rounded.Logout, "Sign out") },
-        )
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(8.dp))
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
+        ) {
+            items(primaryDestinations) { destination ->
+                val active = selected == destination
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigate(destination) }
+                        .background(
+                            if (active) CinaVaultCyan.copy(alpha = 0.13f) else Color.Transparent,
+                            RoundedCornerShape(13.dp),
+                        )
+                        .padding(vertical = 7.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        destination.icon(),
+                        destination.label,
+                        tint = if (active) CinaVaultCyan else CinaVaultMuted,
+                        modifier = Modifier.size(19.dp),
+                    )
+                    Text(
+                        destination.shortLabel(),
+                        color = if (active) CinaVaultText else CinaVaultMuted,
+                        fontSize = 7.sp,
+                        maxLines = 1,
+                    )
+                }
+            }
+        }
+        IconButton(onClick = onLogout) {
+            Icon(Icons.Rounded.Logout, contentDescription = "Sign out")
+        }
     }
 }
 
@@ -464,12 +572,13 @@ private fun SpatialNavigationRail(
 private fun SpatialBottomNavigation(
     selected: AppDestination,
     onNavigate: (AppDestination) -> Unit,
+    onOpenCommands: () -> Unit,
 ) {
     NavigationBar(
-        containerColor = CinaVaultPanel.copy(alpha = 0.97f),
+        containerColor = Color(0xFF050918),
         tonalElevation = 0.dp,
     ) {
-        destinations.forEach { destination ->
+        compactDestinations.forEach { destination ->
             NavigationBarItem(
                 selected = selected == destination,
                 onClick = { onNavigate(destination) },
@@ -478,31 +587,177 @@ private fun SpatialBottomNavigation(
                 alwaysShowLabel = false,
             )
         }
+        NavigationBarItem(
+            selected = selected !in compactDestinations,
+            onClick = onOpenCommands,
+            icon = { Icon(Icons.Rounded.Apps, "All destinations") },
+            label = { Text("More", fontSize = 8.sp) },
+            alwaysShowLabel = false,
+        )
+    }
+}
+
+@Composable
+private fun CommandPaletteOverlay(
+    selected: AppDestination,
+    onNavigate: (AppDestination) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    val filtered = remember(query) {
+        val normalized = query.trim().lowercase()
+        if (normalized.isEmpty()) primaryDestinations
+        else primaryDestinations.filter {
+            it.label.lowercase().contains(normalized) || it.parityId.contains(normalized)
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFA02040D))
+            .clickable(onClick = onDismiss)
+            .padding(horizontal = 20.dp, vertical = 44.dp),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = false) {}
+                .background(Color(0xFF070B1B), RoundedCornerShape(24.dp))
+                .border(1.dp, CinaVaultCyan.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
+                .padding(14.dp),
+        ) {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                leadingIcon = { Icon(Icons.Rounded.Search, null) },
+                placeholder = { Text("Go anywhere in CinaVault") },
+                singleLine = true,
+                shape = RoundedCornerShape(16.dp),
+            )
+            Spacer(Modifier.height(10.dp))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.76f),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                items(filtered) { destination ->
+                    val active = selected == destination
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigate(destination) }
+                            .background(
+                                if (active) CinaVaultCyan.copy(alpha = 0.12f) else Color(0xFF0A1022),
+                                RoundedCornerShape(15.dp),
+                            )
+                            .padding(13.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        Icon(
+                            destination.icon(),
+                            contentDescription = null,
+                            tint = if (active) CinaVaultCyan else CinaVaultOrchid,
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(destination.label, color = CinaVaultText, fontWeight = FontWeight.Black)
+                            Text(destination.eyebrow(), color = CinaVaultMuted, fontSize = 10.sp)
+                        }
+                        if (active) {
+                            Text("ACTIVE", color = CinaVaultCyan, fontSize = 8.sp, fontWeight = FontWeight.Black)
+                        }
+                    }
+                }
+            }
+            Text(
+                text = "Ctrl/Command+K toggles this surface on hardware keyboards",
+                color = CinaVaultMuted,
+                fontSize = 9.sp,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+        }
     }
 }
 
 private fun AppDestination.icon(): ImageVector = when (this) {
     AppDestination.Library -> Icons.Rounded.GridView
-    AppDestination.Player -> Icons.Rounded.PlayCircle
+    AppDestination.Sources -> Icons.Rounded.Folder
+    AppDestination.Downloads -> Icons.Rounded.Download
+    AppDestination.LiveTv -> Icons.Rounded.LiveTv
+    AppDestination.Server -> Icons.Rounded.Memory
+    AppDestination.Security -> Icons.Rounded.Security
     AppDestination.Remote -> Icons.Rounded.Cloud
-    AppDestination.Casting -> Icons.Rounded.Cast
+    AppDestination.Advanced -> Icons.Rounded.Tune
+    AppDestination.CloudNas -> Icons.Rounded.Storage
+    AppDestination.Extensions -> Icons.Rounded.Extension
     AppDestination.Intelligence -> Icons.Rounded.AutoAwesome
     AppDestination.Settings -> Icons.Rounded.Settings
+    AppDestination.Casting -> Icons.Rounded.Cast
+    AppDestination.Player -> Icons.Rounded.PlayCircle
 }
 
 private fun AppDestination.shortLabel(): String = when (this) {
     AppDestination.Library -> "Vault"
-    AppDestination.Player -> "Play"
+    AppDestination.Sources -> "Sources"
+    AppDestination.Downloads -> "Queue"
+    AppDestination.LiveTv -> "Live"
+    AppDestination.Server -> "Server"
+    AppDestination.Security -> "Guard"
     AppDestination.Remote -> "Remote"
-    AppDestination.Casting -> "Cast"
+    AppDestination.Advanced -> "Tools"
+    AppDestination.CloudNas -> "Cloud"
+    AppDestination.Extensions -> "Extend"
     AppDestination.Intelligence -> "AI"
     AppDestination.Settings -> "Setup"
+    AppDestination.Casting -> "Cast"
+    AppDestination.Player -> "Play"
+}
+
+private fun AppDestination.eyebrow(): String = when (this) {
+    AppDestination.Library -> "CINEMATIC LIBRARY"
+    AppDestination.Sources -> "AUTONOMOUS INGESTION"
+    AppDestination.Downloads -> "ACQUISITION STREAM"
+    AppDestination.LiveTv -> "BROADCAST FABRIC"
+    AppDestination.Server -> "EMBEDDED MEDIA CORE"
+    AppDestination.Security -> "TRUSTED COMPUTE"
+    AppDestination.Remote -> "ANYWHERE ACCESS"
+    AppDestination.Advanced -> "EXPERT SYSTEMS"
+    AppDestination.CloudNas -> "STORAGE FABRIC"
+    AppDestination.Extensions -> "CAPABILITY LAYER"
+    AppDestination.Intelligence -> "AUTONOMOUS INTELLIGENCE"
+    AppDestination.Settings -> "EXPERIENCE DESIGN"
+    AppDestination.Casting -> "DEVICE ORBIT"
+    AppDestination.Player -> "SECURE PLAYBACK"
+}
+
+private fun AppDestination.stageTitle(selectedTitle: String?): String = when (this) {
+    AppDestination.Library -> "The Vault"
+    AppDestination.Sources -> "Source Constellation"
+    AppDestination.Downloads -> "Incoming Media"
+    AppDestination.LiveTv -> "Live Signal"
+    AppDestination.Server -> "Server Nexus"
+    AppDestination.Security -> "Security Matrix"
+    AppDestination.Remote -> "Remote Orbit"
+    AppDestination.Advanced -> "Control Lab"
+    AppDestination.CloudNas -> "Cloud Mesh"
+    AppDestination.Extensions -> "Extension Forge"
+    AppDestination.Intelligence -> "AI Autopilot"
+    AppDestination.Settings -> "Personalize CinaVault"
+    AppDestination.Casting -> "Casting Center"
+    AppDestination.Player -> selectedTitle ?: "Now Playing"
 }
 
 @Composable
 private fun ErrorDialog(message: String, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color(0xFF080D1C),
+        titleContentColor = CinaVaultText,
+        textContentColor = CinaVaultMuted,
         title = { Text("CinaVault needs attention") },
         text = { Text(message) },
         confirmButton = {
