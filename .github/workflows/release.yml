@@ -1,0 +1,201 @@
+name: Android v2 Build 2 Publish
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types:
+      - created
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: android-v2-build-2-release
+  cancel-in-progress: false
+
+env:
+  RELEASE_MONITOR_ISSUE: "1"
+
+jobs:
+  authorize:
+    name: Authorize Android release
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.number == 1 &&
+       github.event.comment.body == '/release v2-build-2-android' &&
+       github.event.comment.author_association == 'OWNER')
+    runs-on: ubuntu-latest
+    outputs:
+      allowed: ${{ steps.authorization.outputs.allowed }}
+    steps:
+      - name: Authorize owner command
+        id: authorization
+        shell: bash
+        run: echo "allowed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Register release run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.RELEASE_MONITOR_ISSUE),
+              body: `Android v2 Build 2 release started: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCommit: ${context.sha}`
+            });
+
+  validate-and-publish:
+    name: Validate, sign, and publish APK
+    needs: authorize
+    if: needs.authorize.outputs.allowed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install stable Android 16 API 36
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Setup Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+
+      - name: Verify carry-forward and security rules
+        run: python3 scripts/verify_project.py
+
+      - name: Android lint and unit tests
+        run: gradle --no-daemon --stacktrace :app:lintRelease :app:testReleaseUnitTest
+
+      - name: Build optimized release APK
+        run: gradle --no-daemon --stacktrace :app:assembleRelease
+
+      - name: Prepare release signing identity
+        id: signing
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p signing artifacts
+          if [[ -n "${ANDROID_KEYSTORE_BASE64:-}" && -n "${ANDROID_KEYSTORE_PASSWORD:-}" && -n "${ANDROID_KEY_ALIAS:-}" && -n "${ANDROID_KEY_PASSWORD:-}" ]]; then
+            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > signing/cinavault-release.keystore
+            echo "mode=repository-secret" >> "$GITHUB_OUTPUT"
+          else
+            keytool -genkeypair -v \
+              -keystore signing/cinavault-release.keystore \
+              -storepass cinavault-v2-build-2 \
+              -keypass cinavault-v2-build-2 \
+              -alias cinavault-android \
+              -keyalg RSA \
+              -keysize 4096 \
+              -validity 3650 \
+              -dname "CN=CinaVault Android v2 Build 2, OU=Release Automation, O=CinaVault, L=Remote, ST=Remote, C=US"
+            echo "ANDROID_KEYSTORE_PASSWORD=cinavault-v2-build-2" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_ALIAS=cinavault-android" >> "$GITHUB_ENV"
+            echo "ANDROID_KEY_PASSWORD=cinavault-v2-build-2" >> "$GITHUB_ENV"
+            echo "mode=ephemeral-automation" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sign and verify installable APK
+        shell: bash
+        env:
+          SIGNING_MODE: ${{ steps.signing.outputs.mode }}
+        run: |
+          set -euo pipefail
+          unsigned_apk="$(find app/build/outputs/apk/release -type f -name '*release-unsigned.apk' -print -quit)"
+          if [[ -z "$unsigned_apk" || ! -s "$unsigned_apk" ]]; then
+            echo "Unsigned release APK was not produced." >&2
+            exit 1
+          fi
+
+          zipalign_bin="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name zipalign | sort -V | tail -n 1)"
+          apksigner_bin="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$zipalign_bin"
+          test -x "$apksigner_bin"
+
+          aligned="artifacts/CinaVault-Android-v2-Build-2-aligned.apk"
+          signed="artifacts/CinaVault-Android-v2-Build-2.apk"
+          "$zipalign_bin" -f -p 4 "$unsigned_apk" "$aligned"
+          "$apksigner_bin" sign \
+            --ks signing/cinavault-release.keystore \
+            --ks-pass "pass:${ANDROID_KEYSTORE_PASSWORD}" \
+            --ks-key-alias "$ANDROID_KEY_ALIAS" \
+            --key-pass "pass:${ANDROID_KEY_PASSWORD}" \
+            --out "$signed" \
+            "$aligned"
+          rm "$aligned"
+          "$apksigner_bin" verify --verbose --print-certs "$signed" | tee artifacts/APK-SIGNATURE.txt
+          test -s "$signed"
+          sha256sum "$signed" > artifacts/SHA256SUMS.txt
+          printf '\nSigning mode: %s\n' "$SIGNING_MODE" >> artifacts/SHA256SUMS.txt
+          cat artifacts/SHA256SUMS.txt
+
+      - name: Upload verified APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cinavault-android-v2-build-2-${{ github.sha }}
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish Android v2 Build 2 release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v2-build-2-android
+          target_commitish: ${{ github.sha }}
+          name: CinaVault Android v2 Build 2
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: artifacts/*
+
+      - name: Report successful publication
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.RELEASE_MONITOR_ISSUE),
+              body: `Android v2 Build 2 publication succeeded.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\nRelease: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/releases/tag/v2-build-2-android`
+            });
+
+  report-failure:
+    name: Report Android release failure
+    needs:
+      - authorize
+      - validate-and-publish
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post failed run
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.RELEASE_MONITOR_ISSUE),
+              body: `Android v2 Build 2 release failed.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\nCommit: ${context.sha}`
+            });

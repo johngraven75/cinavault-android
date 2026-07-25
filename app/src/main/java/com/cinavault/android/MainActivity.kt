@@ -1,0 +1,39 @@
+package com.cinavault.android
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.cinavault.android.ui.CinaVaultApp
+import com.cinavault.android.ui.theme.CinaVaultTheme
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            val viewModel: CinaVaultViewModel = viewModel()
+            val state by viewModel.state.collectAsStateWithLifecycle()
+            CinaVaultTheme {
+                CinaVaultApp(
+                    state = state,
+                    onPasswordLogin = viewModel::loginWithPassword,
+                    onAccessKeyLogin = viewModel::loginWithAccessKey,
+                    onLogout = viewModel::logout,
+                    onNavigate = viewModel::navigate,
+                    onSearch = viewModel::setSearchQuery,
+                    onOpenMedia = viewModel::openMedia,
+                    onRefresh = viewModel::refreshLibrary,
+                    onToggleAutopilot = viewModel::toggleAutopilot,
+                    onRunAutopilot = viewModel::runAutopilotNow,
+                    onDismissError = viewModel::clearError,
+                    absoluteMediaUrl = viewModel::absoluteMediaUrl,
+                    sessionToken = viewModel::sessionToken,
+                )
+            }
+        }
+    }
+}
