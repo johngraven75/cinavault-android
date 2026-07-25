@@ -58,8 +58,8 @@ REQUIRED = {
     "app/build.gradle.kts": [
         'versionCode = 2',
         'versionName = "2.0.2"',
-        'compileSdk = 37',
-        'targetSdk = 37',
+        'compileSdk = 36',
+        'targetSdk = 36',
         'minSdk = 24',
         'play-services-cast-framework:22.3.1',
         'media3-exoplayer:1.10.1',
