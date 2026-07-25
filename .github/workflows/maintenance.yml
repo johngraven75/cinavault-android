@@ -35,12 +35,12 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android API and build tools
+      - name: Install stable Android 16 API 36
         shell: bash
         run: |
           set -euo pipefail
           yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-37" "build-tools;36.0.0"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
       - name: Setup Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
