@@ -1,5 +1,9 @@
 package com.cinavault.android.network
 
+import com.cinavault.android.data.ControlAction
+import com.cinavault.android.data.ControlMetric
+import com.cinavault.android.data.ControlSection
+import com.cinavault.android.data.ControlSnapshot
 import com.cinavault.android.data.MediaItem
 import com.cinavault.android.data.RemoteSession
 import com.cinavault.android.data.ServerInfo
@@ -95,6 +99,37 @@ class CinaVaultApi {
             }
         }
 
+    suspend fun loadControlSnapshot(session: RemoteSession): ControlSnapshot =
+        withContext(Dispatchers.IO) {
+            val json = JSONObject(
+                requestText(
+                    endpoint = session.endpoint,
+                    path = "/api/control/snapshot",
+                    method = "GET",
+                    body = null,
+                    token = session.token,
+                ),
+            )
+            parseControlSnapshot(json)
+        }
+
+    suspend fun runControlAction(
+        session: RemoteSession,
+        actionId: String,
+    ): String = withContext(Dispatchers.IO) {
+        val body = JSONObject().put("actionId", actionId).toString()
+        val json = JSONObject(
+            requestText(
+                endpoint = session.endpoint,
+                path = "/api/control/action",
+                method = "POST",
+                body = body,
+                token = session.token,
+            ),
+        )
+        json.optString("message", "Control action completed")
+    }
+
     suspend fun loadArtwork(
         session: RemoteSession,
         artworkPath: String,
@@ -145,6 +180,33 @@ class CinaVaultApi {
         streamUrl = json.optString("streamUrl"),
     )
 
+    private fun parseControlSnapshot(json: JSONObject): ControlSnapshot {
+        val sectionsObject = json.optJSONObject("sections") ?: JSONObject()
+        val sections = buildMap {
+            val keys = sectionsObject.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val sectionJson = sectionsObject.optJSONObject(key) ?: continue
+                put(key, parseControlSection(key, sectionJson))
+            }
+        }
+        return ControlSnapshot(
+            available = json.optBoolean("available", true),
+            generatedAt = json.optString("generatedAt"),
+            message = json.optString("message", "Control state synchronized"),
+            sections = sections,
+        )
+    }
+
+    private fun parseControlSection(id: String, json: JSONObject): ControlSection =
+        ControlSection(
+            id = id,
+            title = json.optString("title", id),
+            subtitle = json.optString("subtitle"),
+            metrics = json.optJSONArray("metrics").controlMetrics(),
+            actions = json.optJSONArray("actions").controlActions(),
+        )
+
     private fun requestText(
         endpoint: String,
         path: String,
@@ -187,6 +249,7 @@ class CinaVaultApi {
             connectTimeout = 15_000
             readTimeout = 45_000
             useCaches = false
+            instanceFollowRedirects = false
             setRequestProperty("Accept", "application/json")
             setRequestProperty("Cache-Control", "no-store")
             token?.takeIf(String::isNotBlank)?.let { value ->
@@ -215,11 +278,13 @@ class CinaVaultApi {
             "Use the encrypted HTTPS CinaVault relay URL"
         }
         require(!uri.host.isNullOrBlank()) { "Enter a valid CinaVault server URL" }
+        require(uri.userInfo.isNullOrBlank()) { "Credentials must not be embedded in the server URL" }
         return trimmed
     }
 
     private fun resolveUrl(endpoint: String, path: String): String {
         if (path.startsWith("https://")) return path
+        require(!path.startsWith("http://")) { "Unencrypted media URLs are not accepted" }
         return endpoint.trimEnd('/') + "/" + path.trimStart('/')
     }
 
@@ -228,6 +293,40 @@ class CinaVaultApi {
         return buildList {
             for (index in 0 until length()) {
                 optString(index).takeIf(String::isNotBlank)?.let(::add)
+            }
+        }
+    }
+
+    private fun JSONArray?.controlMetrics(): List<ControlMetric> {
+        if (this == null) return emptyList()
+        return buildList {
+            for (index in 0 until length()) {
+                val item = optJSONObject(index) ?: continue
+                add(
+                    ControlMetric(
+                        label = item.optString("label"),
+                        value = item.optString("value"),
+                        status = item.optString("status", "normal"),
+                    ),
+                )
+            }
+        }
+    }
+
+    private fun JSONArray?.controlActions(): List<ControlAction> {
+        if (this == null) return emptyList()
+        return buildList {
+            for (index in 0 until length()) {
+                val item = optJSONObject(index) ?: continue
+                add(
+                    ControlAction(
+                        id = item.optString("id"),
+                        label = item.optString("label"),
+                        description = item.optString("description"),
+                        enabled = item.optBoolean("enabled", true),
+                        dangerous = item.optBoolean("dangerous", false),
+                    ),
+                )
             }
         }
     }
