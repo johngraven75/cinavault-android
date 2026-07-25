@@ -16,6 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,23 +43,28 @@ fun CinaVaultRecoveryHost(
 ) {
     val context = LocalContext.current
     var retainedDiagnostic by rememberSaveable { mutableStateOf<String?>(null) }
-    var caughtFailure: Exception? by remember { mutableStateOf(null) }
+    var immediateFailure: Exception? = null
 
     if (retainedDiagnostic == null) {
         try {
             content()
         } catch (error: Exception) {
-            caughtFailure = error
-            retainedDiagnostic = diagnosticId(error)
+            immediateFailure = error
         }
     }
 
-    val diagnostic = retainedDiagnostic
+    val immediateDiagnostic = remember(immediateFailure) {
+        immediateFailure?.let(::diagnosticId)
+    }
+    LaunchedEffect(immediateDiagnostic) {
+        if (immediateDiagnostic != null) retainedDiagnostic = immediateDiagnostic
+    }
+
+    val diagnostic = retainedDiagnostic ?: immediateDiagnostic
     if (diagnostic != null) {
         RecoveryScreen(
             diagnostic = diagnostic,
             onRecoverToLibrary = {
-                caughtFailure = null
                 retainedDiagnostic = null
                 onRecoverToLibrary()
             },
