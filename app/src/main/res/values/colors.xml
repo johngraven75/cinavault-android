@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cinavault_background">#02040A</color>
+    <color name="cinavault_surface">#080D1C</color>
+    <color name="cinavault_cyan">#69F7FF</color>
+    <color name="cinavault_orchid">#B85CFF</color>
+    <color name="cinavault_magenta">#FF4FCF</color>
+</resources>
