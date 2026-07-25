@@ -10,17 +10,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cinavault.android.data.AppDestination
 import com.cinavault.android.ui.CinaVaultApp
 import com.cinavault.android.ui.CinaVaultRecoveryHost
+import com.cinavault.android.ui.detectPreviousAbnormalExit
 import com.cinavault.android.ui.theme.CinaVaultTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val initialRecoveryDiagnostic = detectPreviousAbnormalExit(this)
         enableEdgeToEdge()
         setContent {
             val viewModel: CinaVaultViewModel = viewModel()
             val state by viewModel.state.collectAsStateWithLifecycle()
             CinaVaultTheme {
                 CinaVaultRecoveryHost(
+                    initialDiagnostic = initialRecoveryDiagnostic,
                     onRecoverToLibrary = {
                         viewModel.clearError()
                         viewModel.navigate(AppDestination.Library)
