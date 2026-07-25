@@ -1,6 +1,10 @@
 package com.cinavault.android.ui
 
 import android.app.Activity
+import android.app.ActivityManager
+import android.app.ApplicationExitInfo
+import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -16,10 +20,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,41 +38,56 @@ import com.cinavault.android.ui.theme.CinaVaultMuted
 import com.cinavault.android.ui.theme.CinaVaultPanel
 import com.cinavault.android.ui.theme.CinaVaultText
 
+private const val RECOVERY_PREFERENCES = "cinavault_recovery"
+private const val LAST_HANDLED_EXIT_KEY = "last_handled_exit_timestamp"
+
+fun detectPreviousAbnormalExit(context: Context): String? {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return null
+
+    val activityManager = context.getSystemService(ActivityManager::class.java) ?: return null
+    val exit = activityManager
+        .getHistoricalProcessExitReasons(context.packageName, 0, 5)
+        .firstOrNull { info ->
+            info.reason == ApplicationExitInfo.REASON_CRASH ||
+                info.reason == ApplicationExitInfo.REASON_CRASH_NATIVE ||
+                info.reason == ApplicationExitInfo.REASON_ANR
+        } ?: return null
+
+    val preferences = context.getSharedPreferences(RECOVERY_PREFERENCES, Context.MODE_PRIVATE)
+    val lastHandled = preferences.getLong(LAST_HANDLED_EXIT_KEY, 0L)
+    if (exit.timestamp <= lastHandled) return null
+
+    preferences.edit().putLong(LAST_HANDLED_EXIT_KEY, exit.timestamp).apply()
+    val reason = when (exit.reason) {
+        ApplicationExitInfo.REASON_ANR -> "ANR"
+        ApplicationExitInfo.REASON_CRASH_NATIVE -> "NATIVE"
+        else -> "CRASH"
+    }
+    return "CV-ANDROID-$reason-${exit.timestamp.toString(16).uppercase()}"
+}
+
 @Composable
 fun CinaVaultRecoveryHost(
+    initialDiagnostic: String?,
     onRecoverToLibrary: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    var retainedDiagnostic by rememberSaveable { mutableStateOf<String?>(null) }
-    var immediateFailure: Exception? = null
+    var diagnostic by rememberSaveable { mutableStateOf(initialDiagnostic) }
 
-    if (retainedDiagnostic == null) {
-        try {
-            content()
-        } catch (error: Exception) {
-            immediateFailure = error
-        }
+    if (diagnostic == null) {
+        content()
+        return
     }
 
-    val immediateDiagnostic = remember(immediateFailure) {
-        immediateFailure?.let(::diagnosticId)
-    }
-    LaunchedEffect(immediateDiagnostic) {
-        if (immediateDiagnostic != null) retainedDiagnostic = immediateDiagnostic
-    }
-
-    val diagnostic = retainedDiagnostic ?: immediateDiagnostic
-    if (diagnostic != null) {
-        RecoveryScreen(
-            diagnostic = diagnostic,
-            onRecoverToLibrary = {
-                retainedDiagnostic = null
-                onRecoverToLibrary()
-            },
-            onRestart = { (context as? Activity)?.recreate() },
-        )
-    }
+    RecoveryScreen(
+        diagnostic = diagnostic.orEmpty(),
+        onRecoverToLibrary = {
+            diagnostic = null
+            onRecoverToLibrary()
+        },
+        onRestart = { (context as? Activity)?.recreate() },
+    )
 }
 
 @Composable
@@ -110,13 +127,13 @@ private fun RecoveryScreen(
                 letterSpacing = 2.sp,
             )
             Text(
-                text = "The interface recovered from a rendering failure",
+                text = "The previous session ended unexpectedly",
                 color = CinaVaultText,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Black,
             )
             Text(
-                text = "Account data, encrypted session material, and library records were not cleared. Return safely to the Library or restart the interface.",
+                text = "Account data, encrypted session material, settings, and library records were preserved. Continue safely to the Library or restart the interface.",
                 color = CinaVaultMuted,
                 fontSize = 13.sp,
             )
@@ -143,13 +160,4 @@ private fun RecoveryScreen(
             }
         }
     }
-}
-
-private fun diagnosticId(error: Exception): String {
-    val fingerprint = "${error::class.java.name}:${error.message.orEmpty()}".hashCode()
-        .toUInt()
-        .toString(16)
-        .uppercase()
-        .padStart(8, '0')
-    return "CV-ANDROID-$fingerprint"
 }
