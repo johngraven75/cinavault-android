@@ -15,6 +15,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SharedContractConformanceTest {
@@ -37,7 +38,7 @@ class SharedContractConformanceTest {
 
         assertEquals(golden, encoded)
         assertEquals(listOf("tvmaze", "tmdb"), decoded.providers.map { it.id })
-        assert(decoded.providers.all { it.enabled })
+        assertTrue(decoded.providers.all { it.enabled })
     }
 
     @Test
@@ -52,7 +53,7 @@ class SharedContractConformanceTest {
 
         assertEquals(golden, encoded)
         assertFalse(decoded.localPathExposed)
-        assert(decoded.deliveryPath.startsWith("/api/artwork/"))
+        assertTrue(decoded.deliveryPath.startsWith("/api/artwork/"))
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -69,7 +70,7 @@ class SharedContractConformanceTest {
             .resolve("v1")
             .resolve("golden")
             .resolve(name)
-        return Files.readString(fixture, StandardCharsets.UTF_8)
+        return String(Files.readAllBytes(fixture), StandardCharsets.UTF_8)
     }
 
     private fun locateRepositoryRoot(): Path {
