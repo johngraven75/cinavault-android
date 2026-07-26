@@ -44,14 +44,33 @@ require_all(
     "app/src/main/res/xml/network_security_config.xml",
     ['cleartextTrafficPermitted="false"'],
 )
-require_all(
+
+base_theme = require_all(
     "app/src/main/res/values/themes.xml",
     [
         "android:windowBackground",
+        "android:navigationBarColor",
+        "android:statusBarColor",
+        '<item name="android:windowLightStatusBar">false</item>',
+    ],
+)
+api27_theme = require_all(
+    "app/src/main/res/values-v27/themes.xml",
+    [
+        "android:windowBackground",
+        "android:navigationBarColor",
+        "android:statusBarColor",
         '<item name="android:windowLightStatusBar">false</item>',
         '<item name="android:windowLightNavigationBar">false</item>',
     ],
 )
+if 'android:windowLightNavigationBar' in base_theme:
+    errors.append(
+        "API-27-only android:windowLightNavigationBar must not be defined in the API-24 base theme"
+    )
+if '<style name="Theme.CinaVault"' not in api27_theme:
+    errors.append("values-v27 theme must override Theme.CinaVault")
+
 require_all(
     "app/src/main/java/com/cinavault/android/security/SecureSessionStore.kt",
     ["AndroidKeyStore", "AES/GCM/NoPadding", "setRandomizedEncryptionRequired(true)"],
