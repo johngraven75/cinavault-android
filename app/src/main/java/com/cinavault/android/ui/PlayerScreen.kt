@@ -1,6 +1,7 @@
 package com.cinavault.android.ui
 
 import android.widget.Toast
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,7 +54,7 @@ import com.google.android.gms.cast.MediaLoadRequestData
 import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastContext
 
-@UnstableApi
+@OptIn(UnstableApi::class)
 @Composable
 fun PlayerScreen(
     media: MediaItem?,
