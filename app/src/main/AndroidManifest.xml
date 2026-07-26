@@ -34,13 +34,19 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter android:autoVerify="true">
+
+            <!--
+                CinaVault account handoff uses a private application URI, not an Android App Link.
+                autoVerify is intentionally omitted because Android domain verification only applies
+                to http/https hosts; keeping it on a custom scheme makes lint reject the manifest.
+            -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:host="connect"
-                    android:scheme="cinavault" />
+                    android:scheme="cinavault"
+                    android:host="connect" />
             </intent-filter>
         </activity>
 
