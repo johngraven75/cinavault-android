@@ -69,14 +69,16 @@ class CinaVaultApi {
                 ),
             )
             ServerInfo(
-                name = json.optString("name", "CinaVault Premium"),
-                product = json.optString("product", "CinaVault Embedded Media Server"),
-                version = json.optString("version", "2.0.2"),
-                build = json.optString("build", "v2 Build 2"),
-                accountEmail = json.optString("accountEmail", session.email),
+                name = json.requiredString("name"),
+                product = json.requiredString("product"),
+                version = json.requiredString("version"),
+                build = json.requiredString("build"),
+                displayName = json.requiredString("displayName"),
+                releaseTag = json.requiredString("releaseTag"),
+                accountEmail = json.optString("accountEmail", session.email).ifBlank { session.email },
                 permissions = json.optJSONArray("permissions").stringList(),
-                remoteTransport = json.optString("remoteTransport", "HTTPS relay"),
-                mediaIdentifiers = json.optString("mediaIdentifiers", "opaque media keys"),
+                remoteTransport = json.requiredString("remoteTransport"),
+                mediaIdentifiers = json.requiredString("mediaIdentifiers"),
                 localPathsExposed = json.optBoolean("localPathsExposed", false),
             )
         }
@@ -330,6 +332,10 @@ class CinaVaultApi {
             }
         }
     }
+
+    private fun JSONObject.requiredString(key: String): String =
+        optString(key).trim().takeIf(String::isNotEmpty)
+            ?: throw IllegalStateException("CinaVault server response is missing $key")
 
     private fun JSONObject.nullableString(key: String): String? =
         if (isNull(key)) null else optString(key).takeIf(String::isNotBlank)
