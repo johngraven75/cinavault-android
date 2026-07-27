@@ -32,15 +32,17 @@ data class MediaItem(
 )
 
 data class ServerInfo(
-    val name: String = "CinaVault Premium",
-    val product: String = "CinaVault Embedded Media Server",
-    val version: String = "2.0.2",
-    val build: String = "v2 Build 2",
-    val accountEmail: String = "",
-    val permissions: List<String> = emptyList(),
-    val remoteTransport: String = "HTTPS relay",
-    val mediaIdentifiers: String = "opaque media keys",
-    val localPathsExposed: Boolean = false,
+    val name: String,
+    val product: String,
+    val version: String,
+    val build: String,
+    val displayName: String,
+    val releaseTag: String,
+    val accountEmail: String,
+    val permissions: List<String>,
+    val remoteTransport: String,
+    val mediaIdentifiers: String,
+    val localPathsExposed: Boolean,
 )
 
 data class ControlMetric(
