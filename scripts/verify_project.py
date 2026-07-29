@@ -209,6 +209,23 @@ require_all(
         "media3-exoplayer:1.10.1",
     ],
 )
+
+release_workflow = require_all(
+    ".github/workflows/release.yml",
+    [
+        "ANDROID_KEYSTORE_BASE64",
+        "ANDROID_KEYSTORE_PASSWORD",
+        "ANDROID_KEY_ALIAS",
+        "ANDROID_KEY_PASSWORD",
+        "Require stable release signing identity",
+        "apksigner",
+        "Signing mode: repository-secret",
+    ],
+)
+for forbidden in ("ephemeral-automation", "keytool -genkeypair"):
+    if forbidden in release_workflow:
+        errors.append(f"Android release workflow must not use unstable signing fallback: {forbidden}")
+
 require_all(
     "docs/CARRY_FORWARD.md",
     ["Opaque remote media keys", "Google Cast", "AI Autopilot"],
