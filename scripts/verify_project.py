@@ -245,6 +245,13 @@ if contract_text:
     except json.JSONDecodeError as error:
         errors.append(f"invalid docs/platform-parity.json: {error}")
     else:
+        expected_reference = {
+            "repository": "johngraven75/CinaVault-Premium",
+            "release": "v2-build-1.06",
+            "platform": "windows",
+        }
+        if contract.get("reference") != expected_reference:
+            errors.append("Android parity contract must reference current Windows v2 Build 1.06")
         expected_repositories = [
             "johngraven75/CinaVault-Premium",
             "johngraven75/cinavault-android",
