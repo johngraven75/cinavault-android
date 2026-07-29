@@ -1,0 +1,5 @@
+-keep class com.google.android.gms.cast.** { *; }
+-keep interface com.google.android.gms.cast.** { *; }
+-keep class androidx.media3.** { *; }
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
