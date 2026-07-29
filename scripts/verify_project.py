@@ -218,13 +218,15 @@ release_workflow = require_all(
         "ANDROID_KEY_ALIAS",
         "ANDROID_KEY_PASSWORD",
         "Require stable release signing identity",
+        "Android release lint and complete unit tests",
+        ":app:lintRelease :app:testDebugUnitTest",
         "apksigner",
         "Signing mode: repository-secret",
     ],
 )
-for forbidden in ("ephemeral-automation", "keytool -genkeypair"):
+for forbidden in ("ephemeral-automation", "keytool -genkeypair", ":app:testReleaseUnitTest"):
     if forbidden in release_workflow:
-        errors.append(f"Android release workflow must not use unstable signing fallback: {forbidden}")
+        errors.append(f"Android release workflow contains forbidden release pattern: {forbidden}")
 
 require_all(
     "docs/CARRY_FORWARD.md",
@@ -252,7 +254,7 @@ if contract_text:
             errors.append("platform contract included repository set drifted")
         excluded = contract.get("excludedRepositories", [])
         if len(excluded) != 1 or excluded[0].get("repository") != "johngraven75/Cinavault-Reimagined":
-            errors.append("Cinavault-Reimagined must remain explicitly excluded")
+            errors.append("Cinavault-ReImagined must remain explicitly excluded")
         destination_ids = {entry.get("id") for entry in contract.get("destinations", [])}
         required_destinations = {
             "library", "sources", "downloads", "live-tv", "server", "security",
