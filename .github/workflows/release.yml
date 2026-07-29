@@ -89,38 +89,33 @@ jobs:
       - name: Android lint and unit tests
         run: gradle --no-daemon --stacktrace :app:lintRelease :app:testReleaseUnitTest
 
-      - name: Build optimized release APK
-        run: gradle --no-daemon --stacktrace :app:assembleRelease
-
-      - name: Prepare release signing identity
-        id: signing
+      - name: Require stable release signing identity
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p signing artifacts
-          if [[ -n "${ANDROID_KEYSTORE_BASE64:-}" && -n "${ANDROID_KEYSTORE_PASSWORD:-}" && -n "${ANDROID_KEY_ALIAS:-}" && -n "${ANDROID_KEY_PASSWORD:-}" ]]; then
-            printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > signing/cinavault-release.keystore
-            echo "mode=repository-secret" >> "$GITHUB_OUTPUT"
-          else
-            keytool -genkeypair -v \
-              -keystore signing/cinavault-release.keystore \
-              -storepass cinavault-v2-build-2 \
-              -keypass cinavault-v2-build-2 \
-              -alias cinavault-android \
-              -keyalg RSA \
-              -keysize 4096 \
-              -validity 3650 \
-              -dname "CN=CinaVault Android v2 Build 2, OU=Release Automation, O=CinaVault, L=Remote, ST=Remote, C=US"
-            echo "ANDROID_KEYSTORE_PASSWORD=cinavault-v2-build-2" >> "$GITHUB_ENV"
-            echo "ANDROID_KEY_ALIAS=cinavault-android" >> "$GITHUB_ENV"
-            echo "ANDROID_KEY_PASSWORD=cinavault-v2-build-2" >> "$GITHUB_ENV"
-            echo "mode=ephemeral-automation" >> "$GITHUB_OUTPUT"
+          missing=()
+          [[ -n "${ANDROID_KEYSTORE_BASE64:-}" ]] || missing+=(ANDROID_KEYSTORE_BASE64)
+          [[ -n "${ANDROID_KEYSTORE_PASSWORD:-}" ]] || missing+=(ANDROID_KEYSTORE_PASSWORD)
+          [[ -n "${ANDROID_KEY_ALIAS:-}" ]] || missing+=(ANDROID_KEY_ALIAS)
+          [[ -n "${ANDROID_KEY_PASSWORD:-}" ]] || missing+=(ANDROID_KEY_PASSWORD)
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Stable Android release signing is required. Missing repository secrets: %s\n' "${missing[*]}" >&2
+            exit 1
           fi
+
+          mkdir -p signing artifacts
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > signing/cinavault-release.keystore
+          test -s signing/cinavault-release.keystore
+          keytool -list \
+            -keystore signing/cinavault-release.keystore \
+            -storepass "$ANDROID_KEYSTORE_PASSWORD" \
+            -alias "$ANDROID_KEY_ALIAS" >/dev/null
+
+      - name: Build optimized release APK
+        run: gradle --no-daemon --stacktrace :app:assembleRelease
 
       - name: Sign and verify installable APK
         shell: bash
-        env:
-          SIGNING_MODE: ${{ steps.signing.outputs.mode }}
         run: |
           set -euo pipefail
           unsigned_apk="$(find app/build/outputs/apk/release -type f -name '*release-unsigned.apk' -print -quit)"
@@ -148,7 +143,7 @@ jobs:
           "$apksigner_bin" verify --verbose --print-certs "$signed" | tee artifacts/APK-SIGNATURE.txt
           test -s "$signed"
           sha256sum "$signed" > artifacts/SHA256SUMS.txt
-          printf '\nSigning mode: %s\n' "$SIGNING_MODE" >> artifacts/SHA256SUMS.txt
+          printf '\nSigning mode: repository-secret\n' >> artifacts/SHA256SUMS.txt
           cat artifacts/SHA256SUMS.txt
 
       - name: Upload verified APK artifact
