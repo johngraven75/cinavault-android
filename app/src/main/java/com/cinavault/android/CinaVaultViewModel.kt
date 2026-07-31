@@ -212,11 +212,15 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
                 } else {
                     library
                 }
-                _state.update {
-                    it.copy(
+                _state.update { current ->
+                    val refreshedSelection = current.selectedMedia?.let { selected ->
+                        sorted.firstOrNull { item -> item.mediaKey == selected.mediaKey } ?: selected
+                    }
+                    current.copy(
                         session = session,
                         serverInfo = serverInfo,
                         library = sorted,
+                        selectedMedia = refreshedSelection,
                         controlSnapshot = controls,
                         loading = false,
                         refreshing = false,
