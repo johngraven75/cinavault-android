@@ -273,6 +273,8 @@ fun IntelligenceScreen(
     library: List<MediaItem>,
     enabled: Boolean,
     lastRefreshEpochMillis: Long?,
+    hfTokenStatus: String,
+    providerStatus: String,
     onToggle: (Boolean) -> Unit,
     onRunNow: () -> Unit,
 ) {
@@ -333,6 +335,18 @@ fun IntelligenceScreen(
                 label = "Priority titles",
                 accent = CinaVaultEmerald,
             )
+        }
+
+        GlassPanel {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("HF token: $hfTokenStatus", color = CinaVaultText, fontWeight = FontWeight.Bold)
+                Text("Metadata providers: $providerStatus", color = CinaVaultMuted, fontSize = 12.sp)
+                Text(
+                    "Secrets remain on the Windows server; Android receives readiness only over the authenticated HTTPS session.",
+                    color = CinaVaultMuted,
+                    fontSize = 10.sp,
+                )
+            }
         }
 
         Button(
