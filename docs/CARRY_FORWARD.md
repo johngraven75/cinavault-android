@@ -15,11 +15,15 @@ Every release must retain these capabilities unless an explicit migration docume
 - Compact adaptive media-card library with poster and metadata display.
 - Remote access telemetry and account permissions.
 - AI Autopilot library synchronization, smart ordering, and repair insights.
+- Stable media-key reconciliation after every refresh so enriched metadata and posters update the visible media card and current selection.
+- HF token ownership remains in the Windows secure store; Android displays only server-reported readiness.
+- Metadata provider readiness is synchronized from Windows at startup and after remote control actions.
 - CI validation, signed/installable APK generation, checksums, guarded releases, maintenance, and dependency automation.
 
 ## Change policy
 
 - full-file replacements only; do not submit partial patch hunks as the delivered implementation.
+- No registered capability may be removed or weakened unless the repository owner explicitly requests its removal.
 - Never remove a registered capability to make a build pass.
 - Repair the implementation or its environment and rerun all gates.
 - Do not publish an APK unless lint, unit tests, debug build, release build, artifact verification, signature verification, and checksum generation all succeed.
