@@ -137,6 +137,8 @@ shell = require_all(
         "destination-transition-safe",
         "slideInHorizontally",
         "slideOutHorizontally",
+        "Managed by Windows secure store",
+        "Startup readiness synchronized from Windows",
     ],
 )
 for forbidden in ("scaleIn(", "scaleOut(", "blur(", "RenderEffect"):
@@ -175,6 +177,14 @@ require_all(
     ["detectPreviousAbnormalExit", "CinaVaultRecoveryHost", "AppDestination.Library"],
 )
 require_all(
+    "app/src/main/java/com/cinavault/android/ui/ControlScreens.kt",
+    [
+        "HF token: $hfTokenStatus",
+        "Metadata providers: $providerStatus",
+        "Provider secrets remain in the Windows secure store",
+    ],
+)
+require_all(
     "app/src/main/java/com/cinavault/android/ui/LibraryScreen.kt",
     ["GridCells.Adaptive", "RemoteArtwork", "AI-MANAGED LIBRARY"],
 )
@@ -195,6 +205,8 @@ require_all(
         "loadControlSnapshot",
         "runControlAction",
         "ControlSnapshot.unavailable",
+        "refreshedSelection",
+        "item.mediaKey == selected.mediaKey",
     ],
 )
 require_all(
@@ -230,7 +242,15 @@ for forbidden in ("ephemeral-automation", "keytool -genkeypair", ":app:testRelea
 
 require_all(
     "docs/CARRY_FORWARD.md",
-    ["Opaque remote media keys", "Google Cast", "AI Autopilot"],
+    [
+        "Opaque remote media keys",
+        "Google Cast",
+        "AI Autopilot",
+        "Stable media-key reconciliation",
+        "Windows secure store",
+        "provider readiness",
+        "No registered capability may be removed",
+    ],
 )
 require_any(
     "docs/CARRY_FORWARD.md",
