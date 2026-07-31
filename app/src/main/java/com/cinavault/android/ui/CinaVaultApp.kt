@@ -328,6 +328,19 @@ private fun DestinationContent(
             library = state.library,
             enabled = state.autopilotEnabled,
             lastRefreshEpochMillis = state.lastRefreshEpochMillis,
+            hfTokenStatus = state.controlSnapshot.section("ai-autopilot")
+                ?.metrics
+                ?.firstOrNull { it.label.contains("token", ignoreCase = true) }
+                ?.value
+                ?: "Managed by Windows secure store",
+            providerStatus = state.controlSnapshot.section("extensions")
+                ?.metrics
+                ?.firstOrNull { metric ->
+                    metric.label.contains("provider", ignoreCase = true) ||
+                        metric.label.contains("metadata", ignoreCase = true)
+                }
+                ?.value
+                ?: "Startup readiness synchronized from Windows",
             onToggle = onToggleAutopilot,
             onRunNow = onRunAutopilot,
         )
