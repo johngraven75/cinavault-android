@@ -342,7 +342,7 @@ fun IntelligenceScreen(
                 Text("HF token: $hfTokenStatus", color = CinaVaultText, fontWeight = FontWeight.Bold)
                 Text("Metadata providers: $providerStatus", color = CinaVaultMuted, fontSize = 12.sp)
                 Text(
-                    "Secrets remain on the Windows server; Android receives readiness only over the authenticated HTTPS session.",
+                    "Provider secrets remain in the Windows secure store; Android receives readiness only over the authenticated HTTPS session.",
                     color = CinaVaultMuted,
                     fontSize = 10.sp,
                 )
