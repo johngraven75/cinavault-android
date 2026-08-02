@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - v2-build-2
+      - v2-build-2-platform-parity
   workflow_dispatch:
 
 permissions:
@@ -17,7 +18,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Governance, Test, Lint, and APK
+    name: Governance, Contracts, Test, Lint, and APK
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -50,22 +51,63 @@ jobs:
           gradle-version: '9.5.0'
 
       - name: Verify carry-forward and security rules
+        id: governance
         shell: bash
         run: |
           set -o pipefail
           python3 scripts/verify_project.py 2>&1 | tee artifacts/diagnostics/governance.log
 
-      - name: Android lint and unit tests
+      - name: Verify canonical contract hashes
+        id: contract_hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | tee artifacts/diagnostics/shared-contract-hashes.json
+          import hashlib
+          import json
+          from pathlib import Path
+
+          root = Path.cwd()
+          manifest = json.loads((root / "contracts/v1/contract-manifest.json").read_text())
+          results = {}
+          for name, record in manifest["fixtures"].items():
+              payload = (root / "contracts/v1/golden" / name).read_bytes()
+              actual = hashlib.sha256(payload).hexdigest()
+              expected = record["sha256"]
+              if actual != expected:
+                  raise SystemExit(f"Contract hash mismatch for {name}: {actual} != {expected}")
+              results[name] = {"sha256": actual, "verified": True}
+          print(json.dumps({
+              "contractVersion": manifest["contractVersion"],
+              "platform": "kotlin",
+              "fixtures": results,
+          }, indent=2))
+          PY
+
+      - name: Kotlin shared contract conformance tests
+        id: contract_tests
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace :app:lintDebug :app:testDebugUnitTest 2>&1 | tee artifacts/diagnostics/lint-test.log
+          gradle --no-daemon --stacktrace :app:testDebugUnitTest \
+            --tests com.cinavault.android.SharedContractConformanceTest \
+            2>&1 | tee artifacts/diagnostics/contract-tests.log
+
+      - name: Android lint and complete unit tests
+        id: android_tests
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle --no-daemon --stacktrace :app:lintDebug :app:testDebugUnitTest \
+            2>&1 | tee artifacts/diagnostics/lint-test.log
 
       - name: Build installable debug APK
+        id: apk
         shell: bash
         run: |
           set -o pipefail
-          gradle --no-daemon --stacktrace :app:assembleDebug 2>&1 | tee artifacts/diagnostics/assemble-debug.log
+          gradle --no-daemon --stacktrace :app:assembleDebug \
+            2>&1 | tee artifacts/diagnostics/assemble-debug.log
 
       - name: Verify APK and checksums
         shell: bash
@@ -76,6 +118,39 @@ jobs:
           sha256sum artifacts/CinaVault-Android-v2-Build-2-debug.apk > artifacts/SHA256SUMS.txt
           cat artifacts/SHA256SUMS.txt
 
+      - name: Write Android evidence summary
+        if: always()
+        shell: bash
+        env:
+          GOVERNANCE: ${{ steps.governance.outcome }}
+          CONTRACT_HASHES: ${{ steps.contract_hashes.outcome }}
+          CONTRACT_TESTS: ${{ steps.contract_tests.outcome }}
+          ANDROID_TESTS: ${{ steps.android_tests.outcome }}
+          APK: ${{ steps.apk.outcome }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          evidence = {
+              "schemaVersion": 1,
+              "platform": "android",
+              "commit": os.environ.get("GITHUB_SHA", "local"),
+              "contractVersion": 1,
+              "steps": {
+                  "governance": os.environ["GOVERNANCE"],
+                  "contractHashes": os.environ["CONTRACT_HASHES"],
+                  "contractTests": os.environ["CONTRACT_TESTS"],
+                  "androidTests": os.environ["ANDROID_TESTS"],
+                  "apk": os.environ["APK"],
+              },
+          }
+          Path("artifacts/diagnostics/android-evidence.json").write_text(
+              json.dumps(evidence, indent=2) + "\n"
+          )
+          PY
+
       - name: Upload verified Android build
         if: success()
         uses: actions/upload-artifact@v4
@@ -84,14 +159,15 @@ jobs:
           path: |
             artifacts/CinaVault-Android-v2-Build-2-debug.apk
             artifacts/SHA256SUMS.txt
+            contracts/v1/contract-manifest.json
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload Android diagnostics
+      - name: Upload Android diagnostics and evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cinavault-android-v2-build-2-diagnostics-${{ github.sha }}
           path: artifacts/diagnostics/*
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 30

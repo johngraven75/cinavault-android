@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.cinavault.android.data.AppDestination
 import com.cinavault.android.data.CinaVaultUiState
+import com.cinavault.android.data.ControlSnapshot
 import com.cinavault.android.data.MediaItem
 import com.cinavault.android.data.RemoteSession
 import com.cinavault.android.network.CinaVaultApi
@@ -24,7 +25,13 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         secureSessionStore.load()?.let { session ->
-            _state.update { it.copy(session = session, loading = true, statusMessage = "Restoring secure session") }
+            _state.update {
+                it.copy(
+                    session = session,
+                    loading = true,
+                    statusMessage = "Restoring secure session",
+                )
+            }
             refresh(session)
         }
     }
@@ -71,6 +78,40 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
         refresh(session)
     }
 
+    fun runControlAction(actionId: String) {
+        val session = _state.value.session ?: return
+        if (actionId.isBlank() || _state.value.runningControlAction != null) return
+
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    runningControlAction = actionId,
+                    errorMessage = null,
+                    statusMessage = "Running secure control action",
+                )
+            }
+            runCatching { api.runControlAction(session, actionId) }
+                .onSuccess { message ->
+                    _state.update {
+                        it.copy(
+                            runningControlAction = null,
+                            statusMessage = message,
+                        )
+                    }
+                    refresh(session)
+                }
+                .onFailure { error ->
+                    _state.update {
+                        it.copy(
+                            runningControlAction = null,
+                            errorMessage = error.message ?: "Control action failed",
+                            statusMessage = "Control action needs attention",
+                        )
+                    }
+                }
+        }
+    }
+
     fun toggleAutopilot(enabled: Boolean) {
         _state.update {
             it.copy(
@@ -85,6 +126,15 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun runAutopilotNow() {
+        val remoteAction = _state.value.controlSnapshot
+            .section("ai-autopilot")
+            ?.actions
+            ?.firstOrNull { it.id == "ai.run-now" && it.enabled }
+        if (remoteAction != null) {
+            runControlAction(remoteAction.id)
+            return
+        }
+
         _state.update {
             it.copy(statusMessage = "AI Autopilot is reconciling remote library state")
         }
@@ -137,13 +187,26 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
     private fun refresh(session: RemoteSession) {
         viewModelScope.launch {
             _state.update {
-                it.copy(refreshing = true, errorMessage = null, statusMessage = "Synchronizing encrypted library")
+                it.copy(
+                    refreshing = true,
+                    errorMessage = null,
+                    statusMessage = "Synchronizing encrypted library and controls",
+                )
             }
             runCatching {
                 val info = async { api.loadServerInfo(session) }
                 val library = async { api.loadLibrary(session) }
-                info.await() to library.await()
-            }.onSuccess { (serverInfo, library) ->
+                val controls = async {
+                    runCatching { api.loadControlSnapshot(session) }
+                        .getOrElse { error ->
+                            ControlSnapshot.unavailable(
+                                error.message
+                                    ?: "The server has not enabled mobile control endpoints yet.",
+                            )
+                        }
+                }
+                Triple(info.await(), library.await(), controls.await())
+            }.onSuccess { (serverInfo, library, controls) ->
                 val sorted = if (_state.value.autopilotEnabled) {
                     smartSort(library)
                 } else {
@@ -154,9 +217,14 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
                         session = session,
                         serverInfo = serverInfo,
                         library = sorted,
+                        controlSnapshot = controls,
                         loading = false,
                         refreshing = false,
-                        statusMessage = "${sorted.size} encrypted media records synchronized",
+                        statusMessage = if (controls.available) {
+                            "${sorted.size} encrypted media records and controls synchronized"
+                        } else {
+                            "${sorted.size} encrypted media records synchronized; ${controls.message}"
+                        },
                         lastRefreshEpochMillis = System.currentTimeMillis(),
                     )
                 }
