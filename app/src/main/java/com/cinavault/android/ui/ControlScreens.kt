@@ -335,6 +335,14 @@ fun IntelligenceScreen(
             )
         }
 
+        GlassPanel {
+            Text(
+                text = "Provider secrets remain in the Windows secure store",
+                color = CinaVaultMuted,
+                fontSize = 10.sp,
+            )
+        }
+
         Button(
             onClick = onRunNow,
             enabled = enabled,
