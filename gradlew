@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-GRADLE_VERSION="8.14.3"
+GRADLE_VERSION="9.5.0"
 CACHE_ROOT="${HOME}/.cache/cinavault-gradle"
 DIST_DIR="${CACHE_ROOT}/gradle-${GRADLE_VERSION}"
 ZIP_PATH="${CACHE_ROOT}/gradle-${GRADLE_VERSION}-bin.zip"
