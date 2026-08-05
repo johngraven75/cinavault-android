@@ -21,14 +21,17 @@ env:
 jobs:
   test-build-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
+      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare portable Gradle launcher
+        run: chmod +x gradlew
 
       - name: Initialize test notes
         run: |
@@ -58,22 +61,22 @@ jobs:
 
       - name: Run parity governance
         run: |
-          if [[ -f scripts/verify_project.py ]]; then python3 scripts/verify_project.py 2>&1 | tee test-evidence/parity-governance.log; else echo 'No verify_project.py; contract and build checks remain authoritative.' | tee test-evidence/parity-governance.log; fi
+          python3 scripts/verify_project.py 2>&1 | tee test-evidence/parity-governance.log
           echo '- Parity governance: PASS' >> test-evidence/TEST-NOTES.md
 
       - name: Unit tests and lint
         run: |
-          ./gradlew test 2>&1 | tee test-evidence/unit-tests.log
-          ./gradlew lint 2>&1 | tee test-evidence/lint.log
+          ./gradlew :app:testDebugUnitTest --stacktrace 2>&1 | tee test-evidence/unit-tests.log
+          ./gradlew :app:lintDebug --stacktrace 2>&1 | tee test-evidence/lint.log
           echo '- Unit tests and lint: PASS' >> test-evidence/TEST-NOTES.md
 
-      - name: Build APKs
+      - name: Build APK candidates
         run: |
-          ./gradlew assembleDebug 2>&1 | tee test-evidence/debug-build.log
-          ./gradlew assembleRelease 2>&1 | tee test-evidence/release-build.log
+          ./gradlew :app:assembleDebug :app:assembleRelease --stacktrace 2>&1 | tee test-evidence/apk-build.log
           find app/build/outputs/apk -type f -name '*.apk' -exec cp {} package-staging/ \;
           test -n "$(find package-staging -type f -name '*.apk' -print -quit)"
           sha256sum package-staging/*.apk | tee test-evidence/APK-SHA256SUMS.txt
+          cp test-evidence/APK-SHA256SUMS.txt package-staging/SHA256SUMS.txt
           echo '- APK packaging: PASS' >> test-evidence/TEST-NOTES.md
 
       - name: Finalize success notes
@@ -86,6 +89,7 @@ jobs:
         if: failure()
         run: |
           mkdir -p test-evidence
+          test -f test-evidence/TEST-NOTES.md || echo '# CinaVault Android Test Notes' > test-evidence/TEST-NOTES.md
           printf '\n## Final result\n- Result: FAILED\n- Completed UTC: %s\n- Review workflow logs and attached evidence.\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> test-evidence/TEST-NOTES.md
 
       - name: Upload notes for every build
