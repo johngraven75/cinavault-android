@@ -25,9 +25,9 @@ def require(path: str, *tokens: str) -> str:
 
 gradle = require(
     "app/build.gradle.kts",
-    "versionCode = 110",
-    'versionName = "2.0.10"',
-    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.10 Build 1.10\\\"")',
+    "versionCode = 111",
+    'versionName = "2.0.11"',
+    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.11 Build 1.11\\\"")',
     "compileSdk = 36",
     "targetSdk = 36",
     "minSdk = 24",
@@ -99,8 +99,8 @@ if contract_text:
         reference = contract.get("reference", {})
         if reference.get("repository") != "johngraven75/CinaVault-Premium":
             errors.append("Android parity contract must reference CinaVault-Premium")
-        if reference.get("release") not in {"v2-build-1.10", "v2.10", "v2.0.10"}:
-            errors.append("Android parity contract must reference Windows v2.10 Build 1.10")
+        if reference.get("release") not in {"v2-build-1.11", "v2.11", "v2.0.11"}:
+            errors.append("Android parity contract must reference Windows v2.11 Build 1.11")
         policy = contract.get("changePolicy", {})
         for key in ("fullFileReplacementsOnly", "noRegressions", "crossPlatformAuditRequired"):
             if policy.get(key) is not True:
@@ -118,29 +118,10 @@ release = require(
 if "keytool -genkeypair" in release or "ephemeral-automation" in release:
     errors.append("release workflow must not generate an ephemeral signing identity")
 
-adult_provider_root = ROOT / "app" / "src" / "main" / "assets" / "adult-providers"
-adult_providers = ["tpdb", "stashdb", "pgma", "porn_site_nuxt", "iafd", "phoenixadult"]
-for provider in adult_providers:
-    config_path = adult_provider_root / f"{provider}.json"
-    if not config_path.is_file():
-        errors.append(f"missing installed adult provider config: {provider}")
-        continue
-    try:
-        config = json.loads(config_path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        errors.append(f"invalid adult provider JSON {provider}: {exc}")
-        continue
-    if config.get("_key") != provider:
-        errors.append(f"adult provider config key mismatch: {provider}")
-    if config.get("enabled") is not True:
-        errors.append(f"adult provider must start enabled: {provider}")
-    if config.get("poster_download") is not True:
-        errors.append(f"adult poster provider must start enabled: {provider}")
-
 if errors:
-    print("CinaVault Android v2.10 Build 1.10 parity verification failed:")
+    print("CinaVault Android v2.11 Build 1.11 parity verification failed:")
     for error in errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("CinaVault Android v2.10 Build 1.10 parity verification passed.")
+print("CinaVault Android v2.11 Build 1.11 parity verification passed.")

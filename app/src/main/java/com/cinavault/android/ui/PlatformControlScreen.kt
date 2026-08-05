@@ -360,6 +360,12 @@ private fun AppDestination.presentation(): ControlPresentation = when (this) {
         Icons.Rounded.AutoAwesome,
         CinaVaultMagenta,
     )
+    AppDestination.HfModels -> ControlPresentation(
+        "Hugging Face Models",
+        "Select free, public, ungated models for CinaVault AI.",
+        Icons.Rounded.Psychology,
+        CinaVaultSolar,
+    )
     AppDestination.Settings -> ControlPresentation(
         "Experience Control",
         "Manage persistent behavior, automation policy, and user-facing options.",

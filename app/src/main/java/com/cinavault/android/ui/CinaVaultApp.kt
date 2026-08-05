@@ -106,6 +106,7 @@ private val primaryDestinations = listOf(
     AppDestination.CloudNas,
     AppDestination.Extensions,
     AppDestination.Intelligence,
+    AppDestination.HfModels,
     AppDestination.Settings,
 )
 
@@ -343,6 +344,11 @@ private fun DestinationContent(
                 ?: "Startup readiness synchronized from Windows",
             onToggle = onToggleAutopilot,
             onRunNow = onRunAutopilot,
+        )
+        AppDestination.HfModels -> HfModelsScreen(
+            hfTokenStatus = state.controlSnapshot.section("ai-autopilot")
+                ?.metrics?.firstOrNull { it.label.contains("token", ignoreCase = true) }?.value
+                ?: "Managed by Windows secure store",
         )
         AppDestination.Settings -> SettingsScreen(
             session = session,
@@ -708,6 +714,7 @@ private fun AppDestination.icon(): ImageVector = when (this) {
     AppDestination.CloudNas -> Icons.Rounded.Storage
     AppDestination.Extensions -> Icons.Rounded.Extension
     AppDestination.Intelligence -> Icons.Rounded.AutoAwesome
+    AppDestination.HfModels -> Icons.Rounded.Psychology
     AppDestination.Settings -> Icons.Rounded.Settings
     AppDestination.Casting -> Icons.Rounded.Cast
     AppDestination.Player -> Icons.Rounded.PlayCircle
@@ -725,6 +732,7 @@ private fun AppDestination.shortLabel(): String = when (this) {
     AppDestination.CloudNas -> "Cloud"
     AppDestination.Extensions -> "Extend"
     AppDestination.Intelligence -> "AI"
+    AppDestination.HfModels -> "Models"
     AppDestination.Settings -> "Setup"
     AppDestination.Casting -> "Cast"
     AppDestination.Player -> "Play"
@@ -742,6 +750,7 @@ private fun AppDestination.eyebrow(): String = when (this) {
     AppDestination.CloudNas -> "STORAGE FABRIC"
     AppDestination.Extensions -> "CAPABILITY LAYER"
     AppDestination.Intelligence -> "AUTONOMOUS INTELLIGENCE"
+    AppDestination.HfModels -> "PUBLIC MODEL INTELLIGENCE"
     AppDestination.Settings -> "EXPERIENCE DESIGN"
     AppDestination.Casting -> "DEVICE ORBIT"
     AppDestination.Player -> "SECURE PLAYBACK"
@@ -759,6 +768,7 @@ private fun AppDestination.stageTitle(selectedTitle: String?): String = when (th
     AppDestination.CloudNas -> "Cloud Mesh"
     AppDestination.Extensions -> "Extension Forge"
     AppDestination.Intelligence -> "AI Autopilot"
+    AppDestination.HfModels -> "Hugging Face Models"
     AppDestination.Settings -> "Personalize CinaVault"
     AppDestination.Casting -> "Casting Center"
     AppDestination.Player -> selectedTitle ?: "Now Playing"

@@ -97,6 +97,7 @@ enum class AppDestination(val label: String, val parityId: String) {
     CloudNas("Cloud & NAS", "cloud-nas"),
     Extensions("Extensions", "extensions"),
     Intelligence("AI Autopilot", "ai-autopilot"),
+    HfModels("HF Models", "hf-models"),
     Settings("Settings", "settings"),
     Casting("Casting", "casting"),
     Player("Now Playing", "player"),
