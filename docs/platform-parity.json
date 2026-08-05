@@ -3,7 +3,9 @@
   "contractId": "cinavault-platform-parity-v1",
   "reference": {
     "repository": "johngraven75/CinaVault-Premium",
-    "release": "v2-build-1.06",
+    "release": "v2-build-1.08",
+    "displayName": "v2.08 Build 1.08",
+    "semanticVersion": "2.0.8",
     "platform": "windows"
   },
   "includedRepositories": [
@@ -40,7 +42,8 @@
     "authenticated-byte-range-streaming",
     "opaque-media-identifiers",
     "local-path-redaction",
-    "compact-adaptive-media-grid",
+    "larger-adaptive-media-cards",
+    "holographic-selected-media-detail",
     "metadata-and-poster-refresh",
     "automatic-media-management",
     "automatic-source-scan-on-add",
@@ -66,7 +69,8 @@
     "accents": ["electric-cyan", "orchid", "magenta", "emerald", "solar"],
     "navigation": "adaptive rail or sidebar on wide layouts and compact bottom navigation on narrow layouts",
     "commandSearch": "searchable destination command surface with keyboard shortcut where the platform supports hardware keyboards",
-    "mediaGrid": "compact responsive poster cards; Windows targets eight cards per desktop row and mobile adapts by width",
+    "mediaGrid": "larger responsive poster cards with fewer cards per row; mobile adapts by width while preserving readable artwork and controls",
+    "selectedMedia": "a layered 3D holographic detail surface with depth, scan-line treatment, accessible controls, and reduced-motion fallback",
     "motion": "cohesive motion without full-screen blur plus scale composition; reduced-motion preference must be honored",
     "errorState": "branded dark recovery surface that preserves data and provides a safe return path"
   },
@@ -79,51 +83,15 @@
     ]
   },
   "defectParity": [
-    {
-      "id": "CVP-001",
-      "title": "Menu transition white or pale screen",
-      "requiredOutcome": "Navigation cannot strand the interface on a blank surface; root surfaces stay dark and failures recover safely."
-    },
-    {
-      "id": "CVP-002",
-      "title": "Ctrl or Command K command surface compositor stall",
-      "requiredOutcome": "The command surface uses an opaque dark background and avoids full-screen backdrop blur combined with scale transforms."
-    },
-    {
-      "id": "CVP-003",
-      "title": "Source added without immediate scan",
-      "requiredOutcome": "Adding or authorizing a source initiates validation, scan, enrichment, and visible library refresh."
-    },
-    {
-      "id": "CVP-004",
-      "title": "Metadata or poster not appearing on media card",
-      "requiredOutcome": "Enrichment persists artwork and metadata and refreshes the visible card without restart."
-    },
-    {
-      "id": "CVP-005",
-      "title": "Oversized one-card-per-row library",
-      "requiredOutcome": "The library uses compact adaptive poster cards with dense layouts appropriate to the device width."
-    },
-    {
-      "id": "CVP-006",
-      "title": "Remote API exposes file names or local paths",
-      "requiredOutcome": "Remote clients receive opaque media keys and authenticated URLs only; local paths are never returned."
-    },
-    {
-      "id": "CVP-007",
-      "title": "Remote connection unavailable behind NAT",
-      "requiredOutcome": "Clients show automatic direct traversal status and use an HTTPS relay fallback when direct access is unavailable."
-    },
-    {
-      "id": "CVP-008",
-      "title": "Rendering failure blanks entire application",
-      "requiredOutcome": "A platform-appropriate error boundary or recovery host preserves settings and library state and offers safe recovery."
-    },
-    {
-      "id": "CVP-009",
-      "title": "Platform design or option drift",
-      "requiredOutcome": "Design, functions, and user-visible options are compared against this contract in CI before release."
-    }
+    { "id": "CVP-001", "title": "Menu transition white or pale screen", "requiredOutcome": "Navigation cannot strand the interface on a blank surface; root surfaces stay dark and failures recover safely." },
+    { "id": "CVP-002", "title": "Ctrl or Command K command surface compositor stall", "requiredOutcome": "The command surface uses an opaque dark background and avoids full-screen backdrop blur combined with scale transforms." },
+    { "id": "CVP-003", "title": "Source added without immediate scan", "requiredOutcome": "Adding or authorizing a source initiates validation, scan, enrichment, and visible library refresh." },
+    { "id": "CVP-004", "title": "Metadata or poster not appearing on media card", "requiredOutcome": "Enrichment persists artwork and metadata and refreshes the visible card without restart." },
+    { "id": "CVP-005", "title": "Media cards too small or overly dense", "requiredOutcome": "The library uses larger adaptive poster cards with fewer cards per row and readable controls." },
+    { "id": "CVP-006", "title": "Remote API exposes file names or local paths", "requiredOutcome": "Remote clients receive opaque media keys and authenticated URLs only; local paths are never returned." },
+    { "id": "CVP-007", "title": "Remote connection unavailable behind NAT", "requiredOutcome": "Clients show automatic direct traversal status and use an HTTPS relay fallback when direct access is unavailable." },
+    { "id": "CVP-008", "title": "Rendering failure blanks entire application", "requiredOutcome": "A platform-appropriate error boundary or recovery host preserves settings and library state and offers safe recovery." },
+    { "id": "CVP-009", "title": "Platform design or option drift", "requiredOutcome": "Design, functions, and user-visible options are compared against this contract in CI before release." }
   ],
   "changePolicy": {
     "fullFileReplacementsOnly": true,
