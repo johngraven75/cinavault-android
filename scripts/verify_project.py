@@ -25,9 +25,9 @@ def require(path: str, *tokens: str) -> str:
 
 gradle = require(
     "app/build.gradle.kts",
-    "versionCode = 109",
-    'versionName = "2.0.9"',
-    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.09 Build 1.09\\\"")',
+    "versionCode = 110",
+    'versionName = "2.0.10"',
+    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.10 Build 1.10\\\"")',
     "compileSdk = 36",
     "targetSdk = 36",
     "minSdk = 24",
@@ -99,8 +99,8 @@ if contract_text:
         reference = contract.get("reference", {})
         if reference.get("repository") != "johngraven75/CinaVault-Premium":
             errors.append("Android parity contract must reference CinaVault-Premium")
-        if reference.get("release") not in {"v2-build-1.09", "v2.09", "v2.0.9"}:
-            errors.append("Android parity contract must reference Windows v2.09 Build 1.09")
+        if reference.get("release") not in {"v2-build-1.10", "v2.10", "v2.0.10"}:
+            errors.append("Android parity contract must reference Windows v2.10 Build 1.10")
         policy = contract.get("changePolicy", {})
         for key in ("fullFileReplacementsOnly", "noRegressions", "crossPlatformAuditRequired"):
             if policy.get(key) is not True:
@@ -138,9 +138,9 @@ for provider in adult_providers:
         errors.append(f"adult poster provider must start enabled: {provider}")
 
 if errors:
-    print("CinaVault Android v2.09 Build 1.09 parity verification failed:")
+    print("CinaVault Android v2.10 Build 1.10 parity verification failed:")
     for error in errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("CinaVault Android v2.09 Build 1.09 parity verification passed.")
+print("CinaVault Android v2.10 Build 1.10 parity verification passed.")

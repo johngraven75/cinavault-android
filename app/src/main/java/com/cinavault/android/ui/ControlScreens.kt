@@ -78,7 +78,7 @@ fun RemoteScreen(session: RemoteSession, serverInfo: ServerInfo?, statusMessage:
             DetailRow(Icons.Rounded.Link, "Endpoint", session.endpoint)
             DetailRow(Icons.Rounded.Person, "Account", session.email)
             DetailRow(Icons.Rounded.EnhancedEncryption, "Transport", serverInfo?.remoteTransport ?: "HTTPS relay")
-            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.9"} · ${serverInfo?.build ?: "Build 1.09"}")
+            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.10"} · ${serverInfo?.build ?: "Build 1.10"}")
         }
         FilledTonalButton(onClick = onRefresh) { Icon(Icons.Rounded.Refresh, null); Text("  Refresh remote state") }
         Text(statusMessage, color = CinaVaultMuted, fontSize = 11.sp)
@@ -117,11 +117,18 @@ fun IntelligenceScreen(
 ) {
     val uriHandler = LocalUriHandler.current
     var catalogQuery by remember { mutableStateOf("") }
+    var selectedFreeModel by remember { mutableStateOf("Qwen/Qwen3-4B-Instruct-2507") }
+    val freeModels = listOf(
+        "Qwen/Qwen3-4B-Instruct-2507",
+        "HuggingFaceTB/SmolLM3-3B",
+        "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+        "microsoft/Phi-3.5-mini-instruct",
+    )
     val missingArtwork = library.count { it.artworkUrl.isNullOrBlank() }
     val unverified = library.count { !it.verified }
 
     ScreenColumn {
-        ScreenHero("AI Autopilot", "Build 1.09 adds visible AI stop controls and Hugging Face catalog access.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
+        ScreenHero("AI Autopilot", "Build 1.10 adds visible AI stop controls and Hugging Face catalog access.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
         GlassPanel {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -150,8 +157,14 @@ fun IntelligenceScreen(
             Text("Hugging Face Model Catalog", color = CinaVaultText, fontWeight = FontWeight.Black)
             Text("Search public models from the Android user interface.", color = CinaVaultMuted, fontSize = 12.sp)
             OutlinedTextField(value = catalogQuery, onValueChange = { catalogQuery = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, leadingIcon = { Icon(Icons.Rounded.Search, null) }, label = { Text("Model or publisher") })
+            Text("Public ungated choices · reasoning models labeled", color = CinaVaultMuted, fontSize = 11.sp)
+            freeModels.forEach { candidate ->
+                Button(onClick = { selectedFreeModel = candidate }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = if (selectedFreeModel == candidate) CinaVaultMagenta else Color(0xFF25314A))) {
+                    Text(if (candidate.contains("Qwen") || candidate.contains("SmolLM3")) "REASONING · $candidate" else candidate, maxLines = 1)
+                }
+            }
             Button(onClick = {
-                val query = Uri.encode(catalogQuery.trim())
+                val query = Uri.encode(catalogQuery.trim().ifBlank { selectedFreeModel })
                 val url = if (query.isBlank()) "https://huggingface.co/models?pipeline_tag=text-generation&sort=trending" else "https://huggingface.co/models?search=$query&pipeline_tag=text-generation"
                 uriHandler.openUri(url)
             }, modifier = Modifier.fillMaxWidth()) { Icon(Icons.Rounded.Search, null); Text("  Open model catalog") }
