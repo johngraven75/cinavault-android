@@ -78,7 +78,7 @@ fun RemoteScreen(session: RemoteSession, serverInfo: ServerInfo?, statusMessage:
             DetailRow(Icons.Rounded.Link, "Endpoint", session.endpoint)
             DetailRow(Icons.Rounded.Person, "Account", session.email)
             DetailRow(Icons.Rounded.EnhancedEncryption, "Transport", serverInfo?.remoteTransport ?: "HTTPS relay")
-            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.8"} · ${serverInfo?.build ?: "Build 1.09"}")
+            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.9"} · ${serverInfo?.build ?: "Build 1.09"}")
         }
         FilledTonalButton(onClick = onRefresh) { Icon(Icons.Rounded.Refresh, null); Text("  Refresh remote state") }
         Text(statusMessage, color = CinaVaultMuted, fontSize = 11.sp)

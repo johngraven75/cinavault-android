@@ -3,9 +3,9 @@
   "contractId": "cinavault-platform-parity-v1",
   "reference": {
     "repository": "johngraven75/CinaVault-Premium",
-    "release": "v2-build-1.08",
-    "displayName": "v2.08 Build 1.08",
-    "semanticVersion": "2.0.8",
+    "release": "v2-build-1.09",
+    "displayName": "v2.09 Build 1.09",
+    "semanticVersion": "2.0.9",
     "platform": "windows"
   },
   "includedRepositories": [
@@ -45,6 +45,9 @@
     "larger-adaptive-media-cards",
     "holographic-selected-media-detail",
     "metadata-and-poster-refresh",
+    "adult-media-classification",
+    "adult-provider-exclusive-routing",
+    "installed-adult-provider-json-configs",
     "automatic-media-management",
     "automatic-source-scan-on-add",
     "casting-device-discovery",
