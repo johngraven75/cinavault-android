@@ -78,7 +78,7 @@ fun RemoteScreen(session: RemoteSession, serverInfo: ServerInfo?, statusMessage:
             DetailRow(Icons.Rounded.Link, "Endpoint", session.endpoint)
             DetailRow(Icons.Rounded.Person, "Account", session.email)
             DetailRow(Icons.Rounded.EnhancedEncryption, "Transport", serverInfo?.remoteTransport ?: "HTTPS relay")
-            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.11"} · ${serverInfo?.build ?: "Build 1.11"}")
+            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.12"} · ${serverInfo?.build ?: "Build 1.12"}")
         }
         FilledTonalButton(onClick = onRefresh) { Icon(Icons.Rounded.Refresh, null); Text("  Refresh remote state") }
         Text(statusMessage, color = CinaVaultMuted, fontSize = 11.sp)
@@ -121,7 +121,7 @@ fun IntelligenceScreen(
     val unverified = library.count { !it.verified }
 
     ScreenColumn {
-        ScreenHero("AI Autopilot", "Build 1.11 adds visible AI stop controls and dedicated Hugging Face model selection.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
+        ScreenHero("AI Autopilot", "Build 1.12 adds visible AI stop controls and dedicated Hugging Face model selection.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
         GlassPanel {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
