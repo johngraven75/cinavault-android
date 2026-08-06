@@ -2,7 +2,7 @@
 set -euo pipefail
 
 GRADLE_VERSION="9.5.0"
-CACHE_ROOT="${HOME}/.cache/cinavault-gradle"
+CACHE_ROOT="${CINAVAULT_GRADLE_CACHE_ROOT:-${HOME}/.cache/cinavault-gradle}"
 DIST_DIR="${CACHE_ROOT}/gradle-${GRADLE_VERSION}"
 ZIP_PATH="${CACHE_ROOT}/gradle-${GRADLE_VERSION}-bin.zip"
 
