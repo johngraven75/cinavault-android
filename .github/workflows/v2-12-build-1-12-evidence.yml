@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, release/v2.12-build-1.08]
+    branches: [main, release/v2.12-build-1.12]
   workflow_dispatch:
 
 permissions:
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TEST_ARTIFACT_NAME: CinaVault-Android-v2.12-Build-1.08-Test-Notes
+  TEST_ARTIFACT_NAME: CinaVault-Android-v2.12-Build-1.12-Test-Notes
 
 jobs:
   test-build-evidence:
@@ -40,7 +40,7 @@ jobs:
           # CinaVault Android Test Notes
 
           - Public release: v2.12
-          - Build: 1.08
+          - Build: 1.12
           - Internal version: 2.0.12
           - Android versionCode: 112
           - Commit: ${GITHUB_SHA}
@@ -83,7 +83,7 @@ jobs:
         if: success()
         run: |
           printf '\n## Final result\n- Result: PASS\n- Completed UTC: %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> test-evidence/TEST-NOTES.md
-          zip -j package-staging/CinaVault-Android-v2.12-Build-1.08-Test-Notes.zip test-evidence/*
+          zip -j package-staging/CinaVault-Android-v2.12-Build-1.12-Test-Notes.zip test-evidence/*
 
       - name: Record failure
         if: failure()
@@ -105,7 +105,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: CinaVault-Android-v2.12-Build-1.08
+          name: CinaVault-Android-v2.12-Build-1.12
           path: package-staging/
           if-no-files-found: error
           retention-days: 30
