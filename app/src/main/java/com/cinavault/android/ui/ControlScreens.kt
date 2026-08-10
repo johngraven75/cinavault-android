@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material.icons.rounded.Memory
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Psychology
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Security
@@ -78,7 +79,7 @@ fun RemoteScreen(session: RemoteSession, serverInfo: ServerInfo?, statusMessage:
             DetailRow(Icons.Rounded.Link, "Endpoint", session.endpoint)
             DetailRow(Icons.Rounded.Person, "Account", session.email)
             DetailRow(Icons.Rounded.EnhancedEncryption, "Transport", serverInfo?.remoteTransport ?: "HTTPS relay")
-            DetailRow(Icons.Rounded.Memory, "Server build", "${serverInfo?.version ?: "2.0.11"} · ${serverInfo?.build ?: "Build 1.11"}")
+            DetailRow(Icons.Rounded.Memory, "Server build", serverInfo?.let { "${it.version} · ${it.build}" } ?: "Unavailable")
         }
         FilledTonalButton(onClick = onRefresh) { Icon(Icons.Rounded.Refresh, null); Text("  Refresh remote state") }
         Text(statusMessage, color = CinaVaultMuted, fontSize = 11.sp)
@@ -121,7 +122,7 @@ fun IntelligenceScreen(
     val unverified = library.count { !it.verified }
 
     ScreenColumn {
-        ScreenHero("AI Autopilot", "Build 1.11 adds visible AI stop controls and dedicated Hugging Face model selection.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
+        ScreenHero("AI Autopilot", "Manage visible AI stop controls and select public Hugging Face models.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
         GlassPanel {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
