@@ -97,10 +97,15 @@ if contract_text:
         if contract.get("includedRepositories") != expected_repositories:
             errors.append("platform contract included repository set drifted")
         reference = contract.get("reference", {})
-        if reference.get("repository") != "johngraven75/CinaVault-Premium":
-            errors.append("Android parity contract must reference CinaVault-Premium")
-        if reference.get("release") not in {"v2-build-1.12", "v2.12", "v2.0.12"}:
-            errors.append("Android parity contract must reference Windows v2.12 Build 1.12")
+        expected_reference = {
+            "repository": "johngraven75/CinaVault-Premium",
+            "release": "v2-build-1.12",
+            "displayName": "v2.12 Build 1.12",
+            "semanticVersion": "2.0.12",
+            "platform": "windows",
+        }
+        if reference != expected_reference:
+            errors.append("Android parity contract must exactly reference Windows v2.12 Build 1.12")
         policy = contract.get("changePolicy", {})
         for key in ("fullFileReplacementsOnly", "noRegressions", "crossPlatformAuditRequired"):
             if policy.get(key) is not True:
