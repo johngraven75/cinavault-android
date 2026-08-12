@@ -1,0 +1,77 @@
+name: Android v2.13 Build 1.13 Installable TEST APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "contracts/**"
+      - "docs/platform-parity.json"
+      - "scripts/verify_project.py"
+      - ".github/workflows/test-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-v2-0-13-installable-test
+  cancel-in-progress: true
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - name: Validate, test, lint, and build
+        run: |
+          set -euo pipefail
+          python3 scripts/verify_project.py
+          gradle --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      - name: Stage installable TEST APK
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk
+          cat > artifacts/INSTALL-TEST.md <<'EOF'
+          # CinaVault Android v2.13 Build 1.13 TEST
+
+          This is an installable Android debug build signed with the standard Android
+          debug identity. It uses package `com.cinavault.android.debug` and is not a
+          production release.
+
+          1. Download `CinaVault-Android-v2.13-Build-1.13-TEST.apk`.
+          2. Allow installation from the browser or file manager when Android prompts.
+          3. Open the APK and choose Install.
+          4. Connect only to a trusted CinaVault HTTPS server.
+          EOF
+          sha256sum artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CinaVault-Android-v2.13-Build-1.13-Installable-TEST
+          path: artifacts/*
+          if-no-files-found: error
+          retention-days: 90
+      - name: Publish clearly labeled TEST prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v2.0.13-android-test
+          target_commitish: ${{ github.sha }}
+          name: CinaVault Android v2.13 Build 1.13 — Installable TEST
+          prerelease: true
+          fail_on_unmatched_files: true
+          body: This debug-signed TEST APK is installable for evaluation. It is not production-signed and uses a separate `.debug` application id.
+          files: artifacts/*
