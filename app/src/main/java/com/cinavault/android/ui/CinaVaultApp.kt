@@ -308,6 +308,7 @@ private fun DestinationContent(
         AppDestination.Library -> LibraryScreen(
             items = state.filteredLibrary,
             refreshing = state.refreshing,
+            lastRefreshEpochMillis = state.lastRefreshEpochMillis,
             absoluteMediaUrl = absoluteMediaUrl,
             sessionToken = sessionToken(),
             onRefresh = onRefresh,
@@ -318,6 +319,7 @@ private fun DestinationContent(
             streamUrl = state.selectedMedia?.streamUrl?.let(absoluteMediaUrl),
             artworkUrl = state.selectedMedia?.artworkUrl?.let(absoluteMediaUrl),
             token = sessionToken(),
+            lastRefreshEpochMillis = state.lastRefreshEpochMillis,
         )
         AppDestination.Remote -> RemoteScreen(
             session = session,

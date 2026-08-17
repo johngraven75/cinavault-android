@@ -61,6 +61,7 @@ fun PlayerScreen(
     streamUrl: String?,
     artworkUrl: String?,
     token: String?,
+    lastRefreshEpochMillis: Long?,
 ) {
     val context = LocalContext.current
     if (media == null || streamUrl.isNullOrBlank() || token.isNullOrBlank()) {
@@ -149,6 +150,7 @@ fun PlayerScreen(
                     absoluteUrl = artworkUrl,
                     token = token,
                     title = media.title,
+                    refreshEpochMillis = lastRefreshEpochMillis,
                     modifier = Modifier
                         .weight(0.3f)
                         .aspectRatio(2f / 3f),

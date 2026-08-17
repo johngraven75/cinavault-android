@@ -52,6 +52,7 @@ import com.cinavault.android.ui.theme.CinaVaultText
 fun LibraryScreen(
     items: List<MediaItem>,
     refreshing: Boolean,
+    lastRefreshEpochMillis: Long?,
     absoluteMediaUrl: (String) -> String?,
     sessionToken: String?,
     onRefresh: () -> Unit,
@@ -134,6 +135,7 @@ fun LibraryScreen(
                         item = item,
                         artworkUrl = item.artworkUrl?.let(absoluteMediaUrl),
                         sessionToken = sessionToken,
+                        refreshEpochMillis = lastRefreshEpochMillis,
                         onOpen = { onOpenMedia(item) },
                     )
                 }
@@ -147,6 +149,7 @@ private fun MediaCard(
     item: MediaItem,
     artworkUrl: String?,
     sessionToken: String?,
+    refreshEpochMillis: Long?,
     onOpen: () -> Unit,
 ) {
     val shape = RoundedCornerShape(17.dp)
@@ -181,6 +184,7 @@ private fun MediaCard(
                 absoluteUrl = artworkUrl,
                 token = sessionToken,
                 title = item.title,
+                refreshEpochMillis = refreshEpochMillis,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(2f / 3f),

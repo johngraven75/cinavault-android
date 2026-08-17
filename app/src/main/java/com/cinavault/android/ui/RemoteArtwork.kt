@@ -25,17 +25,27 @@ import kotlinx.coroutines.withContext
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
 
+private data class ArtworkRequestKey(
+    val absoluteUrl: String?,
+    val token: String?,
+    val refreshEpochMillis: Long?,
+)
+
 @Composable
 fun RemoteArtwork(
     absoluteUrl: String?,
     token: String?,
     title: String,
+    refreshEpochMillis: Long? = null,
     modifier: Modifier = Modifier,
 ) {
     val bitmap by produceState<android.graphics.Bitmap?>(
         initialValue = null,
-        key1 = absoluteUrl,
-        key2 = token,
+        key1 = ArtworkRequestKey(
+            absoluteUrl = absoluteUrl,
+            token = token,
+            refreshEpochMillis = refreshEpochMillis,
+        ),
     ) {
         value = if (absoluteUrl.isNullOrBlank() || token.isNullOrBlank()) {
             null
