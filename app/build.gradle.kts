@@ -12,11 +12,11 @@ android {
         applicationId = "com.cinavault.android"
         minSdk = 24
         targetSdk = 36
-        versionCode = 171
-        versionName = "2.0.14"
+        versionCode = 113
+        versionName = "2.0.13"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-        buildConfigField("String", "CINAVAULT_BUILD", "\"LumaSift Build 171\"")
+        buildConfigField("String", "CINAVAULT_BUILD", "\"v2.13 Build 1.13\"")
     }
 
     buildTypes {

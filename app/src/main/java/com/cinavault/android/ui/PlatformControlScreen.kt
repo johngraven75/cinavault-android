@@ -379,12 +379,6 @@ private fun AppDestination.presentation(): ControlPresentation = when (this) {
         Icons.Rounded.Cloud,
         CinaVaultCyan,
     )
-    AppDestination.LumaSift -> ControlPresentation(
-        "LumaSift",
-        "Review selected-type duplicate resolution, quality evidence, and quarantine actions.",
-        Icons.Rounded.AutoAwesome,
-        CinaVaultCyan,
-    )
     AppDestination.Library,
     AppDestination.Casting,
     AppDestination.Player,

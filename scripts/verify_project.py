@@ -25,9 +25,9 @@ def require(path: str, *tokens: str) -> str:
 
 gradle = require(
     "app/build.gradle.kts",
-    "versionCode = 171",
-    'versionName = "2.0.14"',
-    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"LumaSift Build 171\\\"")',
+    "versionCode = 113",
+    'versionName = "2.0.13"',
+    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.13 Build 1.13\\\"")',
     "compileSdk = 36",
     "targetSdk = 36",
     "minSdk = 24",
@@ -124,9 +124,9 @@ if "keytool -genkeypair" in release or "ephemeral-automation" in release:
     errors.append("release workflow must not generate an ephemeral signing identity")
 
 if errors:
-    print("CinaVault Android LumaSift Build 171 parity verification failed:")
+    print("CinaVault Android v2.13 Build 1.13 parity verification failed:")
     for error in errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("CinaVault Android LumaSift Build 171 parity verification passed.")
+print("CinaVault Android v2.13 Build 1.13 parity verification passed.")

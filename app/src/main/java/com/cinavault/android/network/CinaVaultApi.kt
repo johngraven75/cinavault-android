@@ -5,12 +5,6 @@ import com.cinavault.android.data.ControlMetric
 import com.cinavault.android.data.ControlSection
 import com.cinavault.android.data.ControlSnapshot
 import com.cinavault.android.data.MediaItem
-import com.cinavault.android.data.LumaSiftCandidate
-import com.cinavault.android.data.LumaSiftDisposition
-import com.cinavault.android.data.LumaSiftGroup
-import com.cinavault.android.data.LumaSiftPlan
-import com.cinavault.android.data.LumaSiftProgress
-import com.cinavault.android.data.LumaSiftQuality
 import com.cinavault.android.data.RemoteSession
 import com.cinavault.android.data.ServerInfo
 import kotlinx.coroutines.Dispatchers
@@ -87,66 +81,6 @@ class CinaVaultApi {
                 mediaIdentifiers = json.requiredString("mediaIdentifiers"),
                 localPathsExposed = json.optBoolean("localPathsExposed", false),
             )
-        }
-
-    suspend fun loadLumaSiftProgress(session: RemoteSession): LumaSiftProgress =
-        withContext(Dispatchers.IO) {
-            parseLumaSiftProgress(
-                JSONObject(
-                    requestText(
-                        endpoint = session.endpoint,
-                        path = "/api/lumasift/status",
-                        method = "GET",
-                        body = null,
-                        token = session.token,
-                    ),
-                ),
-            )
-        }
-
-    suspend fun loadLumaSiftPlan(session: RemoteSession): LumaSiftPlan? =
-        withContext(Dispatchers.IO) {
-            val response = JSONObject(
-                requestText(
-                    endpoint = session.endpoint,
-                    path = "/api/lumasift/plan",
-                    method = "GET",
-                    body = null,
-                    token = session.token,
-                ),
-            )
-            if (response.isNull("plan")) null else parseLumaSiftPlan(response.getJSONObject("plan"))
-        }
-
-    suspend fun startLumaSift(
-        session: RemoteSession,
-        selectedTypes: List<String>,
-    ): String = withContext(Dispatchers.IO) {
-        val body = JSONObject().put("selectedTypes", JSONArray(selectedTypes)).toString()
-        val json = JSONObject(
-            requestText(
-                endpoint = session.endpoint,
-                path = "/api/lumasift/start",
-                method = "POST",
-                body = body,
-                token = session.token,
-            ),
-        )
-        json.optString("message", "LumaSift started")
-    }
-
-    suspend fun applyLumaSiftPlan(session: RemoteSession, planId: String): String =
-        withContext(Dispatchers.IO) {
-            val json = JSONObject(
-                requestText(
-                    endpoint = session.endpoint,
-                    path = "/api/lumasift/plan/apply",
-                    method = "POST",
-                    body = JSONObject().put("planId", planId).toString(),
-                    token = session.token,
-                ),
-            )
-            json.optString("message", "LumaSift quarantine plan applied")
         }
 
     suspend fun loadLibrary(session: RemoteSession): List<MediaItem> =
@@ -246,28 +180,6 @@ class CinaVaultApi {
         imdbId = json.nullableString("imdbId"),
         artworkUrl = json.nullableString("artworkUrl"),
         streamUrl = json.optString("streamUrl"),
-    )
-
-    private fun parseLumaSiftProgress(json: JSONObject): LumaSiftProgress = LumaSiftProgress(
-        scanning = json.optBoolean("scanning", false),
-        phase = json.optString("phase", "Ready"),
-        current = json.optLong("current", 0),
-        total = json.optLong("total", 0),
-        percentage = json.optInt("percentage", 0).coerceIn(0, 100),
-        currentDisplayName = json.nullableString("currentDisplayName"),
-        filesConsidered = json.optLong("filesConsidered", 0),
-        message = json.optString("message", "LumaSift status synchronized"),
-        error = json.nullableString("error"),
-    )
-
-    private fun parseLumaSiftPlan(json: JSONObject): LumaSiftPlan = LumaSiftPlan(
-        id = json.requiredString("id"),
-        status = json.optString("status", "ready_for_review"),
-        createdAt = json.optString("createdAt"),
-        groups = json.optJSONArray("groups").lumaSiftGroups(),
-        reclaimableBytes = json.optLong("reclaimableBytes", 0),
-        queuedFileCount = json.optInt("queuedFileCount", 0),
-        dispositions = json.optJSONArray("dispositions").lumaSiftDispositions(),
     )
 
     private fun parseControlSnapshot(json: JSONObject): ControlSnapshot {
@@ -383,70 +295,6 @@ class CinaVaultApi {
         return buildList {
             for (index in 0 until length()) {
                 optString(index).takeIf(String::isNotBlank)?.let(::add)
-            }
-        }
-    }
-
-    private fun JSONArray?.lumaSiftGroups(): List<LumaSiftGroup> {
-        if (this == null) return emptyList()
-        return buildList {
-            for (index in 0 until length()) {
-                val group = optJSONObject(index) ?: continue
-                val candidates = group.optJSONArray("candidates")
-                add(
-                    LumaSiftGroup(
-                        id = group.requiredString("id"),
-                        winnerId = group.requiredString("winnerId"),
-                        reclaimableBytes = group.optLong("reclaimableBytes", 0),
-                        candidates = candidates.lumaSiftCandidates(),
-                    ),
-                )
-            }
-        }
-    }
-
-    private fun JSONArray?.lumaSiftCandidates(): List<LumaSiftCandidate> {
-        if (this == null) return emptyList()
-        return buildList {
-            for (index in 0 until length()) {
-                val item = optJSONObject(index) ?: continue
-                val quality = item.optJSONObject("quality") ?: JSONObject()
-                add(
-                    LumaSiftCandidate(
-                        id = item.requiredString("id"),
-                        displayName = item.optString("displayName", "Unnamed media"),
-                        mediaKind = item.optString("mediaKind", "video"),
-                        qualityScore = item.optLong("qualityScore", 0),
-                        quality = LumaSiftQuality(
-                            pixelCount = quality.optLong("pixel_count", quality.optLong("pixelCount", 0)),
-                            bitrate = quality.nullableLong("bitrate"),
-                            bitDepth = quality.nullableLong("bit_depth") ?: quality.nullableLong("bitDepth"),
-                            durationMillis = quality.nullableLong("duration_millis") ?: quality.nullableLong("durationMillis"),
-                            fileSizeBytes = quality.optLong("file_size_bytes", quality.optLong("fileSizeBytes", 0)),
-                            reasons = quality.optJSONArray("reasons").stringList(),
-                        ),
-                        disposition = item.optString("disposition", "pending_review"),
-                        dispositionDetail = item.optString("dispositionDetail"),
-                        quarantined = item.optBoolean("quarantined", false),
-                    ),
-                )
-            }
-        }
-    }
-
-    private fun JSONArray?.lumaSiftDispositions(): List<LumaSiftDisposition> {
-        if (this == null) return emptyList()
-        return buildList {
-            for (index in 0 until length()) {
-                val item = optJSONObject(index) ?: continue
-                add(
-                    LumaSiftDisposition(
-                        occurredAt = item.optString("occurredAt"),
-                        displayName = item.optString("displayName", "Unnamed media"),
-                        disposition = item.optString("disposition", "pending_review"),
-                        detail = item.optString("detail"),
-                    ),
-                )
             }
         }
     }

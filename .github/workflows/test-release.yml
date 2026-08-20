@@ -1,8 +1,14 @@
 name: Android v2.13 Build 1.13 Installable TEST APK
 
-# Historical v2.13 test-release workflow. Current releases are published by
-# lumasift-build171-test-release.yml and later versioned workflows.
 on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "contracts/**"
+      - "docs/platform-parity.json"
+      - "scripts/verify_project.py"
+      - ".github/workflows/test-release.yml"
   workflow_dispatch:
 
 permissions:
