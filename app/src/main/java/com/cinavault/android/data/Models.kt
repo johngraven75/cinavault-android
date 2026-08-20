@@ -67,6 +67,62 @@ data class ControlSection(
     val actions: List<ControlAction> = emptyList(),
 )
 
+data class LumaSiftProgress(
+    val scanning: Boolean = false,
+    val phase: String = "Ready",
+    val current: Long = 0,
+    val total: Long = 0,
+    val percentage: Int = 0,
+    val currentDisplayName: String? = null,
+    val filesConsidered: Long = 0,
+    val message: String = "Build a read-only exact-duplicate plan from the connected Windows host.",
+    val error: String? = null,
+)
+
+data class LumaSiftQuality(
+    val pixelCount: Long = 0,
+    val bitrate: Long? = null,
+    val bitDepth: Long? = null,
+    val durationMillis: Long? = null,
+    val fileSizeBytes: Long = 0,
+    val reasons: List<String> = emptyList(),
+)
+
+data class LumaSiftCandidate(
+    val id: String,
+    val displayName: String,
+    val mediaKind: String,
+    val qualityScore: Long,
+    val quality: LumaSiftQuality,
+    val disposition: String,
+    val dispositionDetail: String,
+    val quarantined: Boolean,
+)
+
+data class LumaSiftGroup(
+    val id: String,
+    val winnerId: String,
+    val reclaimableBytes: Long,
+    val candidates: List<LumaSiftCandidate>,
+)
+
+data class LumaSiftDisposition(
+    val occurredAt: String,
+    val displayName: String,
+    val disposition: String,
+    val detail: String,
+)
+
+data class LumaSiftPlan(
+    val id: String,
+    val status: String,
+    val createdAt: String,
+    val groups: List<LumaSiftGroup>,
+    val reclaimableBytes: Long,
+    val queuedFileCount: Int,
+    val dispositions: List<LumaSiftDisposition>,
+)
+
 data class ControlSnapshot(
     val available: Boolean,
     val generatedAt: String,
@@ -88,6 +144,7 @@ data class ControlSnapshot(
 enum class AppDestination(val label: String, val parityId: String) {
     Library("Library", "library"),
     Sources("Media Sources", "sources"),
+    LumaSift("LumaSift", "lumasift"),
     Downloads("Downloads", "downloads"),
     LiveTv("Live TV", "live-tv"),
     Server("Server Core", "server"),
@@ -110,6 +167,8 @@ data class CinaVaultUiState(
     val controlSnapshot: ControlSnapshot = ControlSnapshot.unavailable(
         "Control services have not synchronized yet.",
     ),
+    val lumaSiftProgress: LumaSiftProgress = LumaSiftProgress(),
+    val lumaSiftPlan: LumaSiftPlan? = null,
     val selectedMedia: MediaItem? = null,
     val destination: AppDestination = AppDestination.Library,
     val searchQuery: String = "",

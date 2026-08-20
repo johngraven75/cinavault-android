@@ -98,6 +98,7 @@ import com.google.android.gms.cast.framework.CastButtonFactory
 private val primaryDestinations = listOf(
     AppDestination.Library,
     AppDestination.Sources,
+    AppDestination.LumaSift,
     AppDestination.Downloads,
     AppDestination.LiveTv,
     AppDestination.Server,
@@ -114,7 +115,7 @@ private val primaryDestinations = listOf(
 private val compactDestinations = listOf(
     AppDestination.Library,
     AppDestination.Sources,
-    AppDestination.Remote,
+    AppDestination.LumaSift,
     AppDestination.Intelligence,
     AppDestination.Settings,
 )
@@ -132,6 +133,9 @@ fun CinaVaultApp(
     onControlAction: (String) -> Unit,
     onToggleAutopilot: (Boolean) -> Unit,
     onRunAutopilot: () -> Unit,
+    onRefreshLumaSift: () -> Unit,
+    onStartLumaSift: (List<String>) -> Unit,
+    onApplyLumaSiftPlan: (String) -> Unit,
     onDismissError: () -> Unit,
     absoluteMediaUrl: (String) -> String?,
     sessionToken: () -> String?,
@@ -247,6 +251,9 @@ fun CinaVaultApp(
                                     onControlAction = onControlAction,
                                     onToggleAutopilot = onToggleAutopilot,
                                     onRunAutopilot = onRunAutopilot,
+                                    onRefreshLumaSift = onRefreshLumaSift,
+                                    onStartLumaSift = onStartLumaSift,
+                                    onApplyLumaSiftPlan = onApplyLumaSiftPlan,
                                     onLogout = onLogout,
                                     absoluteMediaUrl = absoluteMediaUrl,
                                     sessionToken = sessionToken,
@@ -299,6 +306,9 @@ private fun DestinationContent(
     onControlAction: (String) -> Unit,
     onToggleAutopilot: (Boolean) -> Unit,
     onRunAutopilot: () -> Unit,
+    onRefreshLumaSift: () -> Unit,
+    onStartLumaSift: (List<String>) -> Unit,
+    onApplyLumaSiftPlan: (String) -> Unit,
     onLogout: () -> Unit,
     absoluteMediaUrl: (String) -> String?,
     sessionToken: () -> String?,
@@ -320,6 +330,14 @@ private fun DestinationContent(
             artworkUrl = state.selectedMedia?.artworkUrl?.let(absoluteMediaUrl),
             token = sessionToken(),
             lastRefreshEpochMillis = state.lastRefreshEpochMillis,
+        )
+        AppDestination.LumaSift -> LumaSiftScreen(
+            progress = state.lumaSiftProgress,
+            plan = state.lumaSiftPlan,
+            runningAction = state.runningControlAction,
+            onRefresh = onRefreshLumaSift,
+            onStart = onStartLumaSift,
+            onApply = onApplyLumaSiftPlan,
         )
         AppDestination.Remote -> RemoteScreen(
             session = session,
@@ -708,6 +726,7 @@ private fun CommandPaletteOverlay(
 private fun AppDestination.icon(): ImageVector = when (this) {
     AppDestination.Library -> Icons.Rounded.GridView
     AppDestination.Sources -> Icons.Rounded.Folder
+    AppDestination.LumaSift -> Icons.Rounded.AutoAwesome
     AppDestination.Downloads -> Icons.Rounded.Download
     AppDestination.LiveTv -> Icons.Rounded.LiveTv
     AppDestination.Server -> Icons.Rounded.Memory
@@ -726,6 +745,7 @@ private fun AppDestination.icon(): ImageVector = when (this) {
 private fun AppDestination.shortLabel(): String = when (this) {
     AppDestination.Library -> "Vault"
     AppDestination.Sources -> "Sources"
+    AppDestination.LumaSift -> "LumaSift"
     AppDestination.Downloads -> "Queue"
     AppDestination.LiveTv -> "Live"
     AppDestination.Server -> "Server"
@@ -744,6 +764,7 @@ private fun AppDestination.shortLabel(): String = when (this) {
 private fun AppDestination.eyebrow(): String = when (this) {
     AppDestination.Library -> "CINEMATIC LIBRARY"
     AppDestination.Sources -> "AUTONOMOUS INGESTION"
+    AppDestination.LumaSift -> "EXACT MEDIA RESOLUTION"
     AppDestination.Downloads -> "ACQUISITION STREAM"
     AppDestination.LiveTv -> "BROADCAST FABRIC"
     AppDestination.Server -> "EMBEDDED MEDIA CORE"
@@ -762,6 +783,7 @@ private fun AppDestination.eyebrow(): String = when (this) {
 private fun AppDestination.stageTitle(selectedTitle: String?): String = when (this) {
     AppDestination.Library -> "The Vault"
     AppDestination.Sources -> "Source Constellation"
+    AppDestination.LumaSift -> "LumaSift"
     AppDestination.Downloads -> "Incoming Media"
     AppDestination.LiveTv -> "Live Signal"
     AppDestination.Server -> "Server Nexus"
