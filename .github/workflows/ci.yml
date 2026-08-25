@@ -113,9 +113,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cp app/build/outputs/apk/debug/app-debug.apk artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk
-          test -s artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk
-          sha256sum artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk > artifacts/SHA256SUMS.txt
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk
+          test -s artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk
+          sha256sum artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk > artifacts/SHA256SUMS.txt
           cat artifacts/SHA256SUMS.txt
 
       - name: Write Android evidence summary
@@ -157,7 +157,7 @@ jobs:
         with:
           name: cinavault-android-v2-13-build-1-13-test-${{ github.sha }}
           path: |
-            artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk
+            artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk
             artifacts/SHA256SUMS.txt
             contracts/v1/contract-manifest.json
           if-no-files-found: error

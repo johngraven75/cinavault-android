@@ -1,4 +1,4 @@
-name: Android v2.13 Build 1.13 Production Publish
+name: Android v2.15 Build 215 Production Publish
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.issue.number == 1 &&
-       github.event.comment.body == '/release v2.0.13-android' &&
+       github.event.comment.body == '/release v2.0.15-android' &&
        github.event.comment.author_association == 'OWNER')
     runs-on: ubuntu-latest
     outputs:
@@ -42,7 +42,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: Number(process.env.RELEASE_MONITOR_ISSUE),
-              body: `Android v2.13 Build 1.13 production release started: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCommit: ${context.sha}`
+              body: `Android v2.15 Build 215 production release started: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCommit: ${context.sha}`
             });
 
   validate-and-publish:
@@ -129,8 +129,8 @@ jobs:
           test -x "$zipalign_bin"
           test -x "$apksigner_bin"
 
-          aligned="artifacts/CinaVault-Android-v2.13-Build-1.13-aligned.apk"
-          signed="artifacts/CinaVault-Android-v2.13-Build-1.13.apk"
+          aligned="artifacts/CinaVault-Android-v2.14-Build-1.13-aligned.apk"
+          signed="artifacts/CinaVault-Android-v2.14-Build-1.13.apk"
           "$zipalign_bin" -f -p 4 "$unsigned_apk" "$aligned"
           "$apksigner_bin" sign \
             --ks signing/cinavault-release.keystore \
@@ -154,12 +154,12 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Publish Android v2.13 Build 1.13 production release
+      - name: Publish Android v2.15 Build 215 production release
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          tag_name: v2.0.13-android
+          tag_name: v2.0.15-android
           target_commitish: ${{ github.sha }}
-          name: CinaVault Android v2.13 Build 1.13
+          name: CinaVault Android v2.15 Build 215
           prerelease: false
           generate_release_notes: true
           fail_on_unmatched_files: true
@@ -173,7 +173,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: Number(process.env.RELEASE_MONITOR_ISSUE),
-              body: `Android v2.13 Build 1.13 production publication succeeded.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\nRelease: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/releases/tag/v2.0.13-android`
+              body: `Android v2.15 Build 215 production publication succeeded.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\nRelease: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/releases/tag/v2.0.15-android`
             });
 
   report-failure:
@@ -192,5 +192,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: Number(process.env.RELEASE_MONITOR_ISSUE),
-              body: `Android v2.13 Build 1.13 production release failed.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\nCommit: ${context.sha}`
+              body: `Android v2.15 Build 215 production release failed.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\nCommit: ${context.sha}`
             });

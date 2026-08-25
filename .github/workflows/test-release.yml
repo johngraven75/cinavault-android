@@ -1,4 +1,4 @@
-name: Android v2.13 Build 1.13 Installable TEST APK
+name: Android v2.15 Build 215 Installable TEST APK
 
 on:
   push:
@@ -45,32 +45,32 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts
-          cp app/build/outputs/apk/debug/app-debug.apk artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk
+          cp app/build/outputs/apk/debug/app-debug.apk artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk
           cat > artifacts/INSTALL-TEST.md <<'EOF'
-          # CinaVault Android v2.13 Build 1.13 TEST
+          # CinaVault Android v2.15 Build 215 TEST
 
           This is an installable Android debug build signed with the standard Android
           debug identity. It uses package `com.cinavault.android.debug` and is not a
           production release.
 
-          1. Download `CinaVault-Android-v2.13-Build-1.13-TEST.apk`.
+          1. Download `CinaVault-Android-v2.14-Build-1.13-TEST.apk`.
           2. Allow installation from the browser or file manager when Android prompts.
           3. Open the APK and choose Install.
           4. Connect only to a trusted CinaVault HTTPS server.
           EOF
-          sha256sum artifacts/CinaVault-Android-v2.13-Build-1.13-TEST.apk > artifacts/SHA256SUMS.txt
+          sha256sum artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk > artifacts/SHA256SUMS.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: CinaVault-Android-v2.13-Build-1.13-Installable-TEST
+          name: CinaVault-Android-v2.14-Build-1.13-Installable-TEST
           path: artifacts/*
           if-no-files-found: error
           retention-days: 90
       - name: Publish clearly labeled TEST prerelease
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          tag_name: v2.0.13-android-test
+          tag_name: v2.0.15-android-test
           target_commitish: ${{ github.sha }}
-          name: CinaVault Android v2.13 Build 1.13 — Installable TEST
+          name: CinaVault Android v2.15 Build 215 — Installable TEST
           prerelease: true
           fail_on_unmatched_files: true
           body: This debug-signed TEST APK is installable for evaluation. It is not production-signed and uses a separate `.debug` application id.

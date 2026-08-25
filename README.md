@@ -1,6 +1,6 @@
 # CinaVault Android
 
-Android client for CinaVault Premium **v2.13 Build 1.13**.
+Android client for CinaVault Premium **v2.15 Build 215**.
 
 This repository follows the same release discipline as the Windows application:
 
@@ -18,7 +18,7 @@ The Android application will connect to a CinaVault Premium server through its a
 
 ## Downloadable test build
 
-The `Android v2.13 Build 1.13 Installable TEST APK` workflow publishes a clearly
+The `Android v2.15 Build 215 Installable TEST APK` workflow publishes a clearly
 labeled debug-signed prerelease APK, SHA-256 checksum, and install notes. This TEST
 package uses the `.debug` application id so it cannot be confused with or replace
 the production-signed app.
