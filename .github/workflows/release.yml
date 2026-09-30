@@ -86,8 +86,8 @@ jobs:
       - name: Verify carry-forward and security rules
         run: python3 scripts/verify_project.py
 
-      - name: Android lint and unit tests
-        run: gradle --no-daemon --stacktrace :app:lintRelease :app:testReleaseUnitTest
+      - name: Android release lint and complete unit tests
+        run: gradle --no-daemon --stacktrace :app:lintRelease :app:testDebugUnitTest
 
       - name: Require stable release signing identity
         shell: bash
