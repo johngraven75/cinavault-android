@@ -152,6 +152,13 @@ object PortraitMath {
     }
 
     /** Deterministic blinking: a quick blink every few seconds, sometimes twice. */
+    /** Power-of-two decode sample size that brings the photo's longer side down to about [maxSide]. */
+    fun decodeSampleSize(width: Int, height: Int, maxSide: Int): Int {
+        var sample = 1
+        while (maxOf(width, height) / (sample * 2) >= maxSide) sample *= 2
+        return sample
+    }
+
     fun blinkAt(seconds: Double): Double {
         val period = 3.6
         val cycle = floor(seconds / period)

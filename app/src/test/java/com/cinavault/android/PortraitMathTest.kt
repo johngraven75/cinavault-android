@@ -139,4 +139,11 @@ class PortraitMathTest {
         assertNull(AgentUiState.dataUrlPayload("https://example.com/face.jpg"))
         assertNull(AgentUiState.dataUrlPayload("data:image/jpeg;base64,"))
     }
+
+    @Test
+    fun largeFacePhotosAreDecodedAtAModestSize() {
+        assertEquals(1, PortraitMath.decodeSampleSize(640, 800, 720))
+        assertEquals(2, PortraitMath.decodeSampleSize(1080, 1440, 720))
+        assertEquals(4, PortraitMath.decodeSampleSize(3024, 4032, 720))
+    }
 }

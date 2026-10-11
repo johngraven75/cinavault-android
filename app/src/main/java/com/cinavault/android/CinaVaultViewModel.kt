@@ -76,9 +76,9 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 status to face
             }.onSuccess { (status, face) ->
-                updateAgent { it.copy(status = status, face = face ?: it.face.takeIf { status.hasFace }, error = null) }
+                updateAgent(session) { it.copy(status = status, face = face ?: it.face.takeIf { status.hasFace }, error = null) }
             }.onFailure { error ->
-                updateAgent { it.copy(error = agentError(error, "The agent is not available on this server yet.")) }
+                updateAgent(session) { it.copy(error = agentError(error, "The agent is not available on this server yet.")) }
             }
         }
     }
@@ -97,7 +97,7 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             runCatching { api.sendAgentMessage(session, message) }
                 .onSuccess { reply ->
-                    updateAgent {
+                    updateAgent(session) {
                         it.copy(
                             messages = (it.messages + AgentChatMessage(fromAgent = true, text = reply)).takeLast(MAX_AGENT_MESSAGES),
                             sending = false,
@@ -106,7 +106,7 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
                     }
                 }
                 .onFailure { error ->
-                    updateAgent { it.copy(sending = false, error = agentError(error, "The agent could not answer")) }
+                    updateAgent(session) { it.copy(sending = false, error = agentError(error, "The agent could not answer")) }
                 }
         }
     }
@@ -119,6 +119,11 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun updateAgent(transform: (AgentUiState) -> AgentUiState) {
         _state.update { it.copy(agent = transform(it.agent)) }
+    }
+
+    /** Applies a late network result only while the same account is still signed in. */
+    private fun updateAgent(session: RemoteSession, transform: (AgentUiState) -> AgentUiState) {
+        _state.update { if (it.session != session) it else it.copy(agent = transform(it.agent)) }
     }
 
     private fun agentError(error: Throwable, fallback: String): String =

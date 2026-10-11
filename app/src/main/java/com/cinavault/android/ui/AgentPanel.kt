@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -59,6 +60,8 @@ import com.cinavault.android.agent.PortraitMath
 import com.cinavault.android.agent.PortraitMesh
 import com.cinavault.android.data.AgentUiState
 import com.cinavault.android.ui.theme.CinaVaultCyan
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.cinavault.android.ui.theme.CinaVaultInk
 import com.cinavault.android.ui.theme.CinaVaultMagenta
 import com.cinavault.android.ui.theme.CinaVaultMuted
@@ -114,7 +117,7 @@ fun AgentPanel(
             contentAlignment = Alignment.Center,
         ) {
             val face = agent.face
-            val bitmap = remember(face) { face?.let { BitmapFactory.decodeByteArray(it.photo, 0, it.photo.size) } }
+            val bitmap by produceState<Bitmap?>(null, face) { value = face?.let { decodeFace(it.photo) } }
             if (face != null && bitmap != null) {
                 PortraitHead(bitmap, face.calibration, mood, Modifier.fillMaxWidth().height(240.dp))
             } else {
@@ -279,4 +282,17 @@ private fun HologramOrb(mood: AgentMood, modifier: Modifier = Modifier) {
         drawCircle(Brush.radialGradient(listOf(tint.copy(alpha = .55f + .3f * pulse), Color.Transparent)), radius = size.minDimension / 2)
         drawCircle(tint.copy(alpha = .9f), radius = size.minDimension * (.16f + .05f * pulse))
     }
+}
+
+private const val MAX_FACE_SIDE = 720
+
+/** Decodes the face off the main thread, scaled down so a large photo can't exhaust memory. */
+private suspend fun decodeFace(photo: ByteArray): Bitmap? = withContext(Dispatchers.Default) {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(photo, 0, photo.size, bounds)
+    if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
+    val options = BitmapFactory.Options().apply {
+        inSampleSize = PortraitMath.decodeSampleSize(bounds.outWidth, bounds.outHeight, MAX_FACE_SIDE)
+    }
+    BitmapFactory.decodeByteArray(photo, 0, photo.size, options)
 }
