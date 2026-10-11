@@ -58,8 +58,17 @@ require(
     '"/api/auth/access-key"',
     '"/api/control/snapshot"',
     '"/api/control/action"',
+    '"/api/agent/status"',
+    '"/api/agent/chat"',
+    '"/api/agent/face"',
     "HttpsURLConnection",
     "instanceFollowRedirects = false",
+)
+require(
+    "app/src/main/java/com/cinavault/android/ui/AgentPanel.kt",
+    "drawBitmapMesh",
+    "rememberReduceMotion",
+    "PortraitMath.pose",
 )
 require(
     "app/src/main/java/com/cinavault/android/ui/LibraryScreen.kt",

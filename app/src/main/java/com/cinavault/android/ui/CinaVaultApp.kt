@@ -133,6 +133,8 @@ fun CinaVaultApp(
     onToggleAutopilot: (Boolean) -> Unit,
     onRunAutopilot: () -> Unit,
     onDismissError: () -> Unit,
+    onSendAgentMessage: (String) -> Unit = {},
+    onResetAgent: () -> Unit = {},
     absoluteMediaUrl: (String) -> String?,
     sessionToken: () -> String?,
 ) {
@@ -247,6 +249,8 @@ fun CinaVaultApp(
                                     onControlAction = onControlAction,
                                     onToggleAutopilot = onToggleAutopilot,
                                     onRunAutopilot = onRunAutopilot,
+                                    onSendAgentMessage = onSendAgentMessage,
+                                    onResetAgent = onResetAgent,
                                     onLogout = onLogout,
                                     absoluteMediaUrl = absoluteMediaUrl,
                                     sessionToken = sessionToken,
@@ -299,6 +303,8 @@ private fun DestinationContent(
     onControlAction: (String) -> Unit,
     onToggleAutopilot: (Boolean) -> Unit,
     onRunAutopilot: () -> Unit,
+    onSendAgentMessage: (String) -> Unit,
+    onResetAgent: () -> Unit,
     onLogout: () -> Unit,
     absoluteMediaUrl: (String) -> String?,
     sessionToken: () -> String?,
@@ -347,6 +353,9 @@ private fun DestinationContent(
                 ?: "Startup readiness synchronized from Windows",
             onToggle = onToggleAutopilot,
             onRunNow = onRunAutopilot,
+            agent = state.agent,
+            onSendAgentMessage = onSendAgentMessage,
+            onResetAgent = onResetAgent,
         )
         AppDestination.HfModels -> HfModelsScreen(
             hfTokenStatus = state.controlSnapshot.section("ai-autopilot")
