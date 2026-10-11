@@ -113,8 +113,13 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun resetAgentConversation() {
         val session = _state.value.session ?: return
-        updateAgent { it.copy(messages = emptyList(), error = null, speakingUntil = 0) }
-        viewModelScope.launch { runCatching { api.resetAgent(session) } }
+        if (_state.value.agent.sending) return
+        // Holding the composer until the server has reset keeps the next message in the new conversation.
+        updateAgent { it.copy(messages = emptyList(), error = null, speakingUntil = 0, sending = true) }
+        viewModelScope.launch {
+            runCatching { api.resetAgent(session) }
+            updateAgent(session) { it.copy(sending = false) }
+        }
     }
 
     private fun updateAgent(transform: (AgentUiState) -> AgentUiState) {
