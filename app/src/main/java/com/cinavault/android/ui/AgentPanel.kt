@@ -117,7 +117,7 @@ fun AgentPanel(
             contentAlignment = Alignment.Center,
         ) {
             val face = agent.face
-            val bitmap by produceState<Bitmap?>(null, face) { value = face?.let { decodeFace(it.photo) } }
+            val bitmap = produceState<Bitmap?>(null, face) { value = face?.let { decodeFace(it.photo) } }.value
             if (face != null && bitmap != null) {
                 PortraitHead(bitmap, face.calibration, mood, Modifier.fillMaxWidth().height(240.dp))
             } else {
