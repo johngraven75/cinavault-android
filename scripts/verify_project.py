@@ -25,9 +25,9 @@ def require(path: str, *tokens: str) -> str:
 
 gradle = require(
     "app/build.gradle.kts",
-    "versionCode = 215",
-    'versionName = "2.0.15"',
-    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.15 Build 215\\\"")',
+    "versionCode = 1003",
+    'versionName = "1.0.3"',
+    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v1.0.3 Pre-Beta Build 103\\\"")',
     "compileSdk = 36",
     "targetSdk = 36",
     "minSdk = 24",
@@ -99,13 +99,13 @@ if contract_text:
         reference = contract.get("reference", {})
         expected_reference = {
             "repository": "johngraven75/CinaVault-Premium",
-            "release": "v2-build-2.15",
-            "displayName": "v2.15 Build 215",
-            "semanticVersion": "2.0.15",
+            "release": "v1.0.3-pre-beta",
+            "displayName": "v1.0.3 Pre-Beta Build 103",
+            "semanticVersion": "1.0.3",
             "platform": "windows",
         }
         if reference != expected_reference:
-            errors.append("Android parity contract must exactly reference Windows v2.15 Build 215")
+            errors.append("Android parity contract must exactly reference Windows v1.0.3 Pre-Beta Build 103")
         policy = contract.get("changePolicy", {})
         for key in ("fullFileReplacementsOnly", "noRegressions", "crossPlatformAuditRequired"):
             if policy.get(key) is not True:
@@ -124,9 +124,9 @@ if "keytool -genkeypair" in release or "ephemeral-automation" in release:
     errors.append("release workflow must not generate an ephemeral signing identity")
 
 if errors:
-    print("CinaVault Android v2.15 Build 215 parity verification failed:")
+    print("CinaVault Android v1.0.3 Pre-Beta Build 103 parity verification failed:")
     for error in errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("CinaVault Android v2.15 Build 215 parity verification passed.")
+print("CinaVault Android v1.0.3 Pre-Beta Build 103 parity verification passed.")
