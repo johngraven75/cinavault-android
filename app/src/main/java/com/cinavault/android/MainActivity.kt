@@ -42,6 +42,8 @@ class MainActivity : ComponentActivity() {
                         onToggleAutopilot = viewModel::toggleAutopilot,
                         onRunAutopilot = viewModel::runAutopilotNow,
                         onDismissError = viewModel::clearError,
+                        onSendAgentMessage = viewModel::sendAgentMessage,
+                        onResetAgent = viewModel::resetAgentConversation,
                         absoluteMediaUrl = viewModel::absoluteMediaUrl,
                         sessionToken = viewModel::sessionToken,
                     )

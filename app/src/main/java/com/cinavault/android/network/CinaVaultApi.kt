@@ -1,5 +1,11 @@
 package com.cinavault.android.network
 
+import android.util.Base64
+import com.cinavault.android.agent.PortraitCalibration
+import com.cinavault.android.agent.PortraitPoint
+import com.cinavault.android.data.AgentFace
+import com.cinavault.android.data.AgentStatus
+import com.cinavault.android.data.AgentUiState
 import com.cinavault.android.data.ControlAction
 import com.cinavault.android.data.ControlMetric
 import com.cinavault.android.data.ControlSection
@@ -15,6 +21,12 @@ import java.io.ByteArrayOutputStream
 import java.net.URI
 import java.net.URL
 import javax.net.ssl.HttpsURLConnection
+
+/** A non-2xx reply; [serverMessage] is the server's own explanation. */
+class CinaVaultHttpException(
+    val status: Int,
+    val serverMessage: String,
+) : IllegalStateException("CinaVault server returned HTTP $status: $serverMessage")
 
 class CinaVaultApi {
     suspend fun loginWithPassword(
@@ -143,6 +155,65 @@ class CinaVaultApi {
         )
     }
 
+    suspend fun loadAgentStatus(session: RemoteSession): AgentStatus =
+        withContext(Dispatchers.IO) {
+            val json = JSONObject(
+                requestText(session.endpoint, "/api/agent/status", "GET", null, session.token),
+            )
+            AgentStatus(
+                enabled = json.optBoolean("enabled", false),
+                configured = json.optBoolean("configured", false),
+                hasFace = json.optBoolean("hasFace", false),
+                messagesPerHour = json.optInt("messagesPerHour", 0),
+            )
+        }
+
+    /** The owner's agent face, or null when none is set. */
+    suspend fun loadAgentFace(session: RemoteSession): AgentFace? =
+        withContext(Dispatchers.IO) {
+            val text = try {
+                requestText(session.endpoint, "/api/agent/face", "GET", null, session.token)
+            } catch (error: CinaVaultHttpException) {
+                if (error.status == 404) return@withContext null
+                throw error
+            }
+            val json = JSONObject(text)
+            val payload = AgentUiState.dataUrlPayload(json.optString("dataUrl"))
+                ?: throw IllegalStateException("The server sent an unreadable agent face")
+            val markers = json.getJSONObject("calibration")
+            AgentFace(
+                photo = Base64.decode(payload, Base64.DEFAULT),
+                calibration = PortraitCalibration(
+                    leftEye = markers.point("leftEye"),
+                    rightEye = markers.point("rightEye"),
+                    mouth = markers.point("mouth"),
+                ),
+            )
+        }
+
+    /** Sends one message to the agent and returns its reply. */
+    suspend fun sendAgentMessage(session: RemoteSession, message: String): String =
+        withContext(Dispatchers.IO) {
+            val body = JSONObject().put("message", message).toString()
+            val json = JSONObject(
+                requestText(
+                    endpoint = session.endpoint,
+                    path = "/api/agent/chat",
+                    method = "POST",
+                    body = body,
+                    token = session.token,
+                    readTimeoutMillis = AGENT_READ_TIMEOUT_MILLIS,
+                ),
+            )
+            json.optString("reply").ifBlank { "…" }
+        }
+
+    suspend fun resetAgent(session: RemoteSession) {
+        withContext(Dispatchers.IO) {
+            requestText(session.endpoint, "/api/agent/reset", "POST", null, session.token)
+        }
+    }
+
     fun absoluteUrl(session: RemoteSession, path: String): String =
         resolveUrl(session.endpoint, path)
 
@@ -215,8 +286,10 @@ class CinaVaultApi {
         method: String,
         body: String?,
         token: String?,
+        readTimeoutMillis: Int = DEFAULT_READ_TIMEOUT_MILLIS,
     ): String {
         val connection = openConnection(endpoint, path, method, token)
+        connection.readTimeout = readTimeoutMillis
         if (body != null) {
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
@@ -249,7 +322,7 @@ class CinaVaultApi {
         return (url.openConnection() as HttpsURLConnection).apply {
             requestMethod = method
             connectTimeout = 15_000
-            readTimeout = 45_000
+            readTimeout = DEFAULT_READ_TIMEOUT_MILLIS
             useCaches = false
             instanceFollowRedirects = false
             setRequestProperty("Accept", "application/json")
@@ -268,7 +341,7 @@ class CinaVaultApi {
         val bytes = output.toByteArray()
         if (status !in 200..299) {
             val message = bytes.toString(Charsets.UTF_8).ifBlank { responseMessage }
-            throw IllegalStateException("CinaVault server returned HTTP $status: $message")
+            throw CinaVaultHttpException(status, message)
         }
         return bytes
     }
@@ -333,6 +406,11 @@ class CinaVaultApi {
         }
     }
 
+    private fun JSONObject.point(key: String): PortraitPoint {
+        val point = getJSONObject(key)
+        return PortraitPoint(point.getDouble("x"), point.getDouble("y"))
+    }
+
     private fun JSONObject.requiredString(key: String): String =
         optString(key).trim().takeIf(String::isNotEmpty)
             ?: throw IllegalStateException("CinaVault server response is missing $key")
@@ -348,4 +426,10 @@ class CinaVaultApi {
 
     private fun JSONObject.nullableDouble(key: String): Double? =
         if (isNull(key)) null else optDouble(key)
+
+    private companion object {
+        const val DEFAULT_READ_TIMEOUT_MILLIS = 45_000
+        /** The agent may search the library a few times before it answers. */
+        const val AGENT_READ_TIMEOUT_MILLIS = 150_000
+    }
 }

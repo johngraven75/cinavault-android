@@ -3,12 +3,15 @@ package com.cinavault.android
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.cinavault.android.data.AgentChatMessage
+import com.cinavault.android.data.AgentUiState
 import com.cinavault.android.data.AppDestination
 import com.cinavault.android.data.CinaVaultUiState
 import com.cinavault.android.data.ControlSnapshot
 import com.cinavault.android.data.MediaItem
 import com.cinavault.android.data.RemoteSession
 import com.cinavault.android.network.CinaVaultApi
+import com.cinavault.android.network.CinaVaultHttpException
 import com.cinavault.android.security.SecureSessionStore
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +60,81 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
         _state.update { current ->
             current.copy(destination = destination, errorMessage = null)
         }
+        if (destination == AppDestination.Intelligence) loadAgent()
     }
+
+    /** Checks whether the server's agent is available and fetches its face. */
+    fun loadAgent() {
+        val session = _state.value.session ?: return
+        viewModelScope.launch {
+            runCatching {
+                val status = api.loadAgentStatus(session)
+                val face = if (status.hasFace) {
+                    runCatching { api.loadAgentFace(session) }.getOrNull()
+                } else {
+                    null
+                }
+                status to face
+            }.onSuccess { (status, face) ->
+                updateAgent(session) { it.copy(status = status, face = face ?: it.face.takeIf { status.hasFace }, error = null) }
+            }.onFailure { error ->
+                updateAgent(session) { it.copy(error = agentError(error, "The agent is not available on this server yet.")) }
+            }
+        }
+    }
+
+    fun sendAgentMessage(text: String) {
+        val session = _state.value.session ?: return
+        val message = text.trim()
+        if (message.isEmpty() || _state.value.agent.sending) return
+        updateAgent {
+            it.copy(
+                messages = (it.messages + AgentChatMessage(fromAgent = false, text = message)).takeLast(MAX_AGENT_MESSAGES),
+                sending = true,
+                error = null,
+            )
+        }
+        viewModelScope.launch {
+            runCatching { api.sendAgentMessage(session, message) }
+                .onSuccess { reply ->
+                    updateAgent(session) {
+                        it.copy(
+                            messages = (it.messages + AgentChatMessage(fromAgent = true, text = reply)).takeLast(MAX_AGENT_MESSAGES),
+                            sending = false,
+                            speakingUntil = System.currentTimeMillis() + AgentUiState.speakingMillis(reply),
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    updateAgent(session) { it.copy(sending = false, error = agentError(error, "The agent could not answer")) }
+                }
+        }
+    }
+
+    fun resetAgentConversation() {
+        val session = _state.value.session ?: return
+        if (_state.value.agent.sending) return
+        // Holding the composer until the server has reset keeps the next message in the new conversation.
+        updateAgent { it.copy(messages = emptyList(), error = null, speakingUntil = 0, sending = true) }
+        viewModelScope.launch {
+            runCatching { api.resetAgent(session) }
+            updateAgent(session) { it.copy(sending = false) }
+        }
+    }
+
+    private fun updateAgent(transform: (AgentUiState) -> AgentUiState) {
+        _state.update { it.copy(agent = transform(it.agent)) }
+    }
+
+    /** Applies a late network result only while the same account is still signed in. */
+    private fun updateAgent(session: RemoteSession, transform: (AgentUiState) -> AgentUiState) {
+        _state.update { if (it.session != session) it else it.copy(agent = transform(it.agent)) }
+    }
+
+    private fun agentError(error: Throwable, fallback: String): String =
+        (error as? CinaVaultHttpException)?.serverMessage?.takeIf(String::isNotBlank)
+            ?: error.message
+            ?: fallback
 
     fun setSearchQuery(query: String) {
         _state.update { it.copy(searchQuery = query) }
@@ -243,6 +320,10 @@ class CinaVaultViewModel(application: Application) : AndroidViewModel(applicatio
                 }
             }
         }
+    }
+
+    private companion object {
+        const val MAX_AGENT_MESSAGES = 40
     }
 
     private fun smartSort(items: List<MediaItem>): List<MediaItem> =

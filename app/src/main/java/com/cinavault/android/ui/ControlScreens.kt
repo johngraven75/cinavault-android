@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.mediarouter.app.MediaRouteButton
 import com.cinavault.android.BuildConfig
+import com.cinavault.android.data.AgentUiState
 import com.cinavault.android.data.MediaItem
 import com.cinavault.android.data.RemoteSession
 import com.cinavault.android.data.ServerInfo
@@ -115,6 +116,9 @@ fun IntelligenceScreen(
     providerStatus: String,
     onToggle: (Boolean) -> Unit,
     onRunNow: () -> Unit,
+    agent: AgentUiState = AgentUiState(),
+    onSendAgentMessage: (String) -> Unit = {},
+    onResetAgent: () -> Unit = {},
 ) {
     val uriHandler = LocalUriHandler.current
     var catalogQuery by remember { mutableStateOf("") }
@@ -123,6 +127,7 @@ fun IntelligenceScreen(
 
     ScreenColumn {
         ScreenHero("AI Autopilot", "Manage visible AI stop controls and select public Hugging Face models.", Icons.Rounded.AutoAwesome, CinaVaultMagenta)
+        AgentPanel(agent = agent, onSend = onSendAgentMessage, onReset = onResetAgent)
         GlassPanel {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {

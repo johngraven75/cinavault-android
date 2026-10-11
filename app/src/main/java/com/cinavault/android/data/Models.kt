@@ -120,6 +120,7 @@ data class CinaVaultUiState(
     val errorMessage: String? = null,
     val autopilotEnabled: Boolean = true,
     val lastRefreshEpochMillis: Long? = null,
+    val agent: AgentUiState = AgentUiState(),
 ) {
     val filteredLibrary: List<MediaItem>
         get() {
