@@ -12,11 +12,12 @@ android {
         applicationId = "com.cinavault.android"
         minSdk = 24
         targetSdk = 36
-        versionCode = 215
-        versionName = "2.0.15"
+        // major*1000 + minor*100 + patch: stays above the old 215 so existing installs upgrade.
+        versionCode = 1003
+        versionName = "1.0.3"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-        buildConfigField("String", "CINAVAULT_BUILD", "\"v2.15 Build 215\"")
+        buildConfigField("String", "CINAVAULT_BUILD", "\"v1.0.3 Pre-Beta Build 103\"")
     }
 
     buildTypes {

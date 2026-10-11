@@ -1,4 +1,4 @@
-name: Android v2.15 Build 215 Installable TEST APK
+name: Android v1.0.3 Pre-Beta Build 103 Installable TEST APK
 
 on:
   push:
@@ -29,6 +29,9 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          # The legacy "tools" package no longer exists in current sdkmanager.
+          packages: platform-tools
       - name: Install Android SDK
         run: |
           yes | sdkmanager --licenses >/dev/null || true
@@ -47,7 +50,7 @@ jobs:
           mkdir -p artifacts
           cp app/build/outputs/apk/debug/app-debug.apk artifacts/CinaVault-Android-v2.14-Build-1.13-TEST.apk
           cat > artifacts/INSTALL-TEST.md <<'EOF'
-          # CinaVault Android v2.15 Build 215 TEST
+          # CinaVault Android v1.0.3 Pre-Beta Build 103 TEST
 
           This is an installable Android debug build signed with the standard Android
           debug identity. It uses package `com.cinavault.android.debug` and is not a
@@ -68,9 +71,9 @@ jobs:
       - name: Publish clearly labeled TEST prerelease
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
-          tag_name: v2.0.15-android-test
+          tag_name: v1.0.3-android-test
           target_commitish: ${{ github.sha }}
-          name: CinaVault Android v2.15 Build 215 — Installable TEST
+          name: CinaVault Android v1.0.3 Pre-Beta Build 103 — Installable TEST
           prerelease: true
           fail_on_unmatched_files: true
           body: This debug-signed TEST APK is installable for evaluation. It is not production-signed and uses a separate `.debug` application id.
