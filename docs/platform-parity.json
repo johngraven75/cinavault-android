@@ -3,10 +3,111 @@
   "contractId": "cinavault-platform-parity-v1",
   "reference": {
     "repository": "johngraven75/CinaVault-Premium",
-    "release": "v1.0.3-pre-beta",
-    "displayName": "v1.0.3 Pre-Beta Build 103",
-    "semanticVersion": "1.0.3",
+    "release": "v2.1.7-beta-3",
+    "displayName": "v2.1.7-beta-3",
+    "semanticVersion": "2.1.7",
     "platform": "windows"
+  },
+  "standingRule": {
+    "effective": "2026-11-02",
+    "rule": "Every change to the current CinaVault Premium Windows build carries over to ALL OS versions (Debian/Zorin Linux, Android, iOS) on EVERY new build, nothing left behind, unless the owner specifically says otherwise for that change.",
+    "greenDefinition": "Nothing counts as green until ALL OS versions are greenlit - checked and passing workflow all the way through publish and release, on every platform. A single platform being green, including Android alone or Windows alone, does not make the platform set green.",
+    "scope": "This Android repository records its own carried-over and left-behind items in windowsBeta3 below; left-behind items are flagged, not silently dropped, and require follow-up port work or an explicit owner exception for that change."
+  },
+  "windowsBeta3": {
+    "referenceMain": "7bd0b75c",
+    "release": "v2.1.7-beta-3",
+    "windowsMergedWork": "Six fixes from CinaVault-Premium PRs #190 and #191, vault encryption from PR #192, and docs cleanup from PR #193 (main head 7bd0b75c).",
+    "androidScopeNote": "Android is a Kotlin native REMOTE client for a Premium server, not the Windows server itself. 'via-server' below means the Windows server does the work and Android only displays or triggers it through the authenticated remote API. It is not a claim that Android implements the feature locally.",
+    "features": [
+      {
+        "id": "library-remote-browsing",
+        "windowsFeature": "Library browsing with authenticated artwork and streaming",
+        "androidStatus": "via-server",
+        "note": "Android browses the server library over HTTPS with opaque media keys and authenticated artwork and byte-range streams; it does not own the library database."
+      },
+      {
+        "id": "player-and-casting",
+        "windowsFeature": "Media playback and casting",
+        "androidStatus": "implemented",
+        "note": "Media3 ExoPlayer playback with a background media session service and Google Cast discovery and playback handoff."
+      },
+      {
+        "id": "metadata-and-poster-refresh",
+        "windowsFeature": "Metadata and poster refresh on media cards",
+        "androidStatus": "via-server",
+        "note": "Enrichment runs on the Windows server; Android refreshes visible cards through stable media-key reconciliation. There is no local enrichment engine on Android."
+      },
+      {
+        "id": "card-match-unmatch-lookup",
+        "windowsFeature": "3-dot card menu: Match, Unmatch, Lookup",
+        "androidStatus": "not-implemented",
+        "note": "LEFT BEHIND: no card dropdown menu exists in the Android codebase, so Match, Unmatch and Lookup cannot be run from an Android media card. Windows offers them in CardCornerMenu."
+      },
+      {
+        "id": "background-ai-enrichment",
+        "windowsFeature": "Background AI enrichment and AI Autopilot",
+        "androidStatus": "via-server",
+        "note": "Enrichment and autopilot run on the server; Android shows the agent panel and runs a server action only when the control snapshot reports it as enabled."
+      },
+      {
+        "id": "adult-poster-metadata-automation",
+        "windowsFeature": "Adult poster and metadata automation",
+        "androidStatus": "not-implemented",
+        "note": "LEFT BEHIND: adult provider asset files are bundled but no Android code references them to run local automation; any automation today is server-side only."
+      },
+      {
+        "id": "vault-encryption",
+        "windowsFeature": "App vault encryption: passphrase, XChaCha20-Poly1305, Argon2id",
+        "androidStatus": "not-implemented",
+        "note": "LEFT BEHIND: no passphrase gate, XChaCha20-Poly1305 or Argon2id exists on Android. SecureSessionStore is AndroidKeyStore AES-GCM session storage only and is not a vault; it must not be described as vault encryption."
+      },
+      {
+        "id": "wireguard-vpn",
+        "windowsFeature": "WireGuard VPN install and profiles",
+        "androidStatus": "not-implemented",
+        "note": "LEFT BEHIND: no WireGuard code, profile store or VPN service exists on Android."
+      },
+      {
+        "id": "google-drive",
+        "windowsFeature": "Google Drive OAuth and listing",
+        "androidStatus": "not-implemented",
+        "note": "LEFT BEHIND: no Google Drive OAuth or listing code exists on Android. On Windows, Drive listing and ingestion remain a follow-up even after the OAuth work."
+      },
+      {
+        "id": "adult-gating-store-safe",
+        "windowsFeature": "Adult-provider gating and store-safe mode",
+        "androidStatus": "not-implemented",
+        "note": "LEFT BEHIND: Android has no store-safe edition gate. Its shared contract requires every metadata provider to remain enabled, and bundled adult provider assets are marked enabled with no gate found in Android code."
+      },
+      {
+        "id": "spatial-dark-ui-themes",
+        "windowsFeature": "Spatial dark UI with accent themes",
+        "androidStatus": "implemented",
+        "note": "Dark CinaVault theme with electric-cyan, orchid, magenta, emerald and solar accents, adaptive rail or bottom navigation, and reduced-motion support."
+      },
+      {
+        "id": "server-core-local",
+        "windowsFeature": "Local server core runtime",
+        "androidStatus": "platform-limitation",
+        "note": "Android is a remote client by design and does not run the Windows server runtime. Server administration is represented by authenticated control snapshot and action views, which show an action only when the server confirms support."
+      },
+      {
+        "id": "other-destinations-remote-controls",
+        "windowsFeature": "Downloads, Live TV, Security, Cloud and NAS, Extensions, Settings destinations",
+        "androidStatus": "via-server",
+        "note": "These destinations exist as generic server control screens on Android, not as local implementations of the Windows tabs."
+      }
+    ],
+    "leftBehind": [
+      "card-match-unmatch-lookup",
+      "adult-poster-metadata-automation",
+      "vault-encryption",
+      "wireguard-vpn",
+      "google-drive",
+      "adult-gating-store-safe"
+    ],
+    "leftBehindNote": "These six Windows changes remain unported on Android after this PR. Under the 2026-11-02 standing rule they are flagged here as left behind; they require follow-up port work or an explicit owner exception for that specific change, and Android alone being green does not make the platform set green."
   },
   "includedRepositories": [
     "johngraven75/CinaVault-Premium",
@@ -20,19 +121,71 @@
     }
   ],
   "destinations": [
-    { "id": "library", "label": "Library", "required": true },
-    { "id": "sources", "label": "Media Sources", "required": true },
-    { "id": "downloads", "label": "Downloads", "required": true },
-    { "id": "live-tv", "label": "Live TV", "required": true },
-    { "id": "server", "label": "Server Core", "required": true },
-    { "id": "security", "label": "Security", "required": true },
-    { "id": "remote", "label": "Remote Access", "required": true },
-    { "id": "advanced", "label": "Advanced", "required": true },
-    { "id": "cloud-nas", "label": "Cloud & NAS", "required": true },
-    { "id": "extensions", "label": "Extensions", "required": true },
-    { "id": "ai-autopilot", "label": "AI Autopilot", "required": true },
-    { "id": "hf-models", "label": "HF Models", "required": true },
-    { "id": "settings", "label": "Settings", "required": true }
+    {
+      "id": "library",
+      "label": "Library",
+      "required": true
+    },
+    {
+      "id": "sources",
+      "label": "Media Sources",
+      "required": true
+    },
+    {
+      "id": "downloads",
+      "label": "Downloads",
+      "required": true
+    },
+    {
+      "id": "live-tv",
+      "label": "Live TV",
+      "required": true
+    },
+    {
+      "id": "server",
+      "label": "Server Core",
+      "required": true
+    },
+    {
+      "id": "security",
+      "label": "Security",
+      "required": true
+    },
+    {
+      "id": "remote",
+      "label": "Remote Access",
+      "required": true
+    },
+    {
+      "id": "advanced",
+      "label": "Advanced",
+      "required": true
+    },
+    {
+      "id": "cloud-nas",
+      "label": "Cloud & NAS",
+      "required": true
+    },
+    {
+      "id": "extensions",
+      "label": "Extensions",
+      "required": true
+    },
+    {
+      "id": "ai-autopilot",
+      "label": "AI Autopilot",
+      "required": true
+    },
+    {
+      "id": "hf-models",
+      "label": "HF Models",
+      "required": true
+    },
+    {
+      "id": "settings",
+      "label": "Settings",
+      "required": true
+    }
   ],
   "crossPlatformCapabilities": [
     "account-password-login",
@@ -71,7 +224,13 @@
   "visualContract": {
     "designSystem": "CinaVault spatial command environment",
     "background": "explicit dark surface on every root, overlay, dialog, loading state, and transition frame",
-    "accents": ["electric-cyan", "orchid", "magenta", "emerald", "solar"],
+    "accents": [
+      "electric-cyan",
+      "orchid",
+      "magenta",
+      "emerald",
+      "solar"
+    ],
     "navigation": "adaptive rail or sidebar on wide layouts and compact bottom navigation on narrow layouts",
     "commandSearch": "searchable destination command surface with keyboard shortcut where the platform supports hardware keyboards",
     "mediaGrid": "larger responsive poster cards with fewer cards per row; mobile adapts by width while preserving readable artwork and controls",
@@ -88,15 +247,51 @@
     ]
   },
   "defectParity": [
-    { "id": "CVP-001", "title": "Menu transition white or pale screen", "requiredOutcome": "Navigation cannot strand the interface on a blank surface; root surfaces stay dark and failures recover safely." },
-    { "id": "CVP-002", "title": "Ctrl or Command K command surface compositor stall", "requiredOutcome": "The command surface uses an opaque dark background and avoids full-screen backdrop blur combined with scale transforms." },
-    { "id": "CVP-003", "title": "Source added without immediate scan", "requiredOutcome": "Adding or authorizing a source initiates validation, scan, enrichment, and visible library refresh." },
-    { "id": "CVP-004", "title": "Metadata or poster not appearing on media card", "requiredOutcome": "Enrichment persists artwork and metadata and refreshes the visible card without restart." },
-    { "id": "CVP-005", "title": "Media cards too small or overly dense", "requiredOutcome": "The library uses larger adaptive poster cards with fewer cards per row and readable controls." },
-    { "id": "CVP-006", "title": "Remote API exposes file names or local paths", "requiredOutcome": "Remote clients receive opaque media keys and authenticated URLs only; local paths are never returned." },
-    { "id": "CVP-007", "title": "Remote connection unavailable behind NAT", "requiredOutcome": "Clients show automatic direct traversal status and use an HTTPS relay fallback when direct access is unavailable." },
-    { "id": "CVP-008", "title": "Rendering failure blanks entire application", "requiredOutcome": "A platform-appropriate error boundary or recovery host preserves settings and library state and offers safe recovery." },
-    { "id": "CVP-009", "title": "Platform design or option drift", "requiredOutcome": "Design, functions, and user-visible options are compared against this contract in CI before release." }
+    {
+      "id": "CVP-001",
+      "title": "Menu transition white or pale screen",
+      "requiredOutcome": "Navigation cannot strand the interface on a blank surface; root surfaces stay dark and failures recover safely."
+    },
+    {
+      "id": "CVP-002",
+      "title": "Ctrl or Command K command surface compositor stall",
+      "requiredOutcome": "The command surface uses an opaque dark background and avoids full-screen backdrop blur combined with scale transforms."
+    },
+    {
+      "id": "CVP-003",
+      "title": "Source added without immediate scan",
+      "requiredOutcome": "Adding or authorizing a source initiates validation, scan, enrichment, and visible library refresh."
+    },
+    {
+      "id": "CVP-004",
+      "title": "Metadata or poster not appearing on media card",
+      "requiredOutcome": "Enrichment persists artwork and metadata and refreshes the visible card without restart."
+    },
+    {
+      "id": "CVP-005",
+      "title": "Media cards too small or overly dense",
+      "requiredOutcome": "The library uses larger adaptive poster cards with fewer cards per row and readable controls."
+    },
+    {
+      "id": "CVP-006",
+      "title": "Remote API exposes file names or local paths",
+      "requiredOutcome": "Remote clients receive opaque media keys and authenticated URLs only; local paths are never returned."
+    },
+    {
+      "id": "CVP-007",
+      "title": "Remote connection unavailable behind NAT",
+      "requiredOutcome": "Clients show automatic direct traversal status and use an HTTPS relay fallback when direct access is unavailable."
+    },
+    {
+      "id": "CVP-008",
+      "title": "Rendering failure blanks entire application",
+      "requiredOutcome": "A platform-appropriate error boundary or recovery host preserves settings and library state and offers safe recovery."
+    },
+    {
+      "id": "CVP-009",
+      "title": "Platform design or option drift",
+      "requiredOutcome": "Design, functions, and user-visible options are compared against this contract in CI before release."
+    }
   ],
   "changePolicy": {
     "fullFileReplacementsOnly": true,

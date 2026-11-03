@@ -20,6 +20,27 @@ Every release must retain these capabilities unless an explicit migration docume
 - Metadata provider readiness is synchronized from Windows at startup and after remote control actions.
 - CI validation, signed/installable APK generation, checksums, guarded releases, maintenance, and dependency automation.
 
+## Windows v2.1.7-beta-3 parity note (2026-11-02)
+
+Version pairing only: Android numbering now follows Windows v2.1.7-beta-3
+(main `7bd0b75c`). This does not claim feature duplication.
+
+- Retained: HTTPS-only server endpoints, Android Keystore AES-GCM session
+  storage, account-password and access-key login, opaque remote media keys,
+  authenticated library/artwork/byte-range streaming, Media3 playback and
+  Cast handoff, spatial dark UI, AI Autopilot remote actions, and the
+  control-snapshot remote views.
+- Carried over in this step: the shared parity contract reference, version
+  pairing, governance checks, and a `WindowsBeta3Parity` status model with
+  unit tests that name every beta-3 feature and its Android status.
+- Explicitly left behind (flagged, not dropped): card Match/Unmatch/Lookup,
+  local adult poster/metadata automation, vault encryption (passphrase,
+  XChaCha20-Poly1305, Argon2id), WireGuard VPN, Google Drive OAuth/listing,
+  and adult-provider gating / store-safe mode. Session storage must never
+  be described as vault encryption. Follow-up port work or an explicit
+  owner exception for that specific change is required before the platform
+  set can be called green.
+
 ## Change policy
 
 - full-file replacements only; do not submit partial patch hunks as the delivered implementation.

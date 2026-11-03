@@ -25,9 +25,9 @@ def require(path: str, *tokens: str) -> str:
 
 gradle = require(
     "app/build.gradle.kts",
-    "versionCode = 1003",
-    'versionName = "1.0.3"',
-    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v1.0.3 Pre-Beta Build 103\\\"")',
+    "versionCode = 2107",
+    'versionName = "2.1.7"',
+    'buildConfigField("String", "CINAVAULT_BUILD", "\\\"v2.1.7-beta-3\\\"")',
     "compileSdk = 36",
     "targetSdk = 36",
     "minSdk = 24",
@@ -108,18 +108,34 @@ if contract_text:
         reference = contract.get("reference", {})
         expected_reference = {
             "repository": "johngraven75/CinaVault-Premium",
-            "release": "v1.0.3-pre-beta",
-            "displayName": "v1.0.3 Pre-Beta Build 103",
-            "semanticVersion": "1.0.3",
+            "release": "v2.1.7-beta-3",
+            "displayName": "v2.1.7-beta-3",
+            "semanticVersion": "2.1.7",
             "platform": "windows",
         }
         if reference != expected_reference:
-            errors.append("Android parity contract must exactly reference Windows v1.0.3 Pre-Beta Build 103")
+            errors.append("Android parity contract must exactly reference Windows v2.1.7-beta-3")
+        beta3 = contract.get("windowsBeta3", {})
+        if beta3.get("release") != "v2.1.7-beta-3" or beta3.get("referenceMain") != "7bd0b75c":
+            errors.append("Android parity contract must record the Windows v2.1.7-beta-3 reference (main 7bd0b75c)")
+        if "standingRule" not in contract:
+            errors.append("Android parity contract must record the 2026-11-02 all-platform standing rule")
+        if not beta3.get("leftBehind"):
+            errors.append("Android parity contract must explicitly list Windows changes left behind on Android")
         policy = contract.get("changePolicy", {})
         for key in ("fullFileReplacementsOnly", "noRegressions", "crossPlatformAuditRequired"):
             if policy.get(key) is not True:
                 errors.append(f"platform policy must keep {key}=true")
 
+require(
+    "app/src/main/java/com/cinavault/android/data/WindowsBeta3Parity.kt",
+    "v2.1.7-beta-3",
+    "7bd0b75c",
+    "vault-encryption",
+    "wireguard-vpn",
+    "google-drive",
+    "LEFT BEHIND",
+)
 release = require(
     ".github/workflows/release.yml",
     "ANDROID_KEYSTORE_BASE64",
@@ -133,9 +149,9 @@ if "keytool -genkeypair" in release or "ephemeral-automation" in release:
     errors.append("release workflow must not generate an ephemeral signing identity")
 
 if errors:
-    print("CinaVault Android v1.0.3 Pre-Beta Build 103 parity verification failed:")
+    print("CinaVault Android v2.1.7-beta-3 parity verification failed:")
     for error in errors:
         print(f" - {error}")
     sys.exit(1)
 
-print("CinaVault Android v1.0.3 Pre-Beta Build 103 parity verification passed.")
+print("CinaVault Android v2.1.7-beta-3 parity verification passed.")
