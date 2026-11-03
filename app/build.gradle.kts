@@ -12,12 +12,14 @@ android {
         applicationId = "com.cinavault.android"
         minSdk = 24
         targetSdk = 36
-        // major*1000 + minor*100 + patch: stays above the old 215 so existing installs upgrade.
-        versionCode = 1003
-        versionName = "1.0.3"
+        // major*1000 + minor*100 + patch: 2*1000 + 1*100 + 7 = 2107, above 1003 so existing installs upgrade.
+        // Version pairing only: this aligns Android numbering with Windows v2.1.7-beta-3.
+        // It is NOT a claim that Android implements every Windows beta-3 feature; see docs/platform-parity.json windowsBeta3.
+        versionCode = 2107
+        versionName = "2.1.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
-        buildConfigField("String", "CINAVAULT_BUILD", "\"v1.0.3 Pre-Beta Build 103\"")
+        buildConfigField("String", "CINAVAULT_BUILD", "\"v2.1.7-beta-3\"")
     }
 
     buildTypes {
